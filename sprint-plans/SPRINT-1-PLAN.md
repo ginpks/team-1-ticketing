@@ -16,7 +16,7 @@
 
 | Team Member | Files / Directories Owned This Sprint           |
 | ----------- | ----------------------------------------------- |
-| [Name]      | `[service-dir]/`, `[service-dir]/db/schema.sql` |
+| Gin Park and Arkar Myint      | `[service-dir]/`, `[service-dir]/db/schema.sql` |
 | [Name]      | `[service-dir]/`, `compose.yml` additions       |
 | [Name]      | `k6/sprint-1.js`, `[worker-dir]/`               |
 
