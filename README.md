@@ -1,9 +1,9 @@
-# [Team Name] — [System Name]
+# Team 1 — Ticketing
 
 **Course:** COMPSCI 426  
-**Team:** [Name], [Name], [Name], ...  
-**System:** [e.g. Event Ticketing / Food Delivery / Video Platform / ...]  
-**Repository:** [GitHub URL — public fork of https://github.com/umass-cs-426/starter-project]
+**Team:** Akar Myint, Gin Park, Sidarth Jain, Aryan Vakil, Din Masic, Tun Lin Naine, Vihaan Sejwani  
+**System:** Event Ticketing
+**Repository:** https://github.com/ginpks/team-1-ticketing
 
 ---
 
