@@ -62,46 +62,23 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 # ── k6 ────────────────────────────────────────────────────────────────────────
-RUN curl -fsSL https://dl.k6.io/key.gpg \
-        | gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
-        | tee /etc/apt/sources.list.d/k6.list \
-    && apt-get update && apt-get install -y k6 \
-    && rm -rf /var/lib/apt/lists/*
-
-# ── Neovim (latest release) ───────────────────────────────────────────────────
 RUN set -eux; \
     DPKG_ARCH=$(dpkg --print-architecture); \
     case "$DPKG_ARCH" in \
-        amd64) NVIM_ARCH="x86_64" ;; \
-        arm64) NVIM_ARCH="arm64"  ;; \
+        amd64) K6_ARCH="amd64" ;; \
+        arm64) K6_ARCH="arm64" ;; \
         *) echo "Unsupported arch: $DPKG_ARCH" && exit 1 ;; \
     esac; \
-    curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
-         | tar -xz -C /opt \
-    && ln -sf "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim
-
-# ── LazyVim starter config (plugins install on first nvim launch) ─────────────
-RUN git clone https://github.com/LazyVim/starter /root/.config/nvim \
-    && rm -rf /root/.config/nvim/.git
+    K6_VER=$(curl -fsSL "https://api.github.com/repos/grafana/k6/releases/latest" \
+             | jq -r .tag_name); \
+    curl -fsSL "https://github.com/grafana/k6/releases/download/${K6_VER}/k6-${K6_VER}-linux-${K6_ARCH}.tar.gz" \
+         | tar -xz -C /tmp \
+    && mv "/tmp/k6-${K6_VER}-linux-${K6_ARCH}/k6" /usr/local/bin/k6 \
+    && rm -rf "/tmp/k6-${K6_VER}-linux-${K6_ARCH}"
 
 # ── Shell conveniences ────────────────────────────────────────────────────────
-RUN cat >> /root/.bashrc << 'EOF'
-
-# lsd aliases
-alias ll="lsd -la"
-alias l="lsd -l"
-alias lt="lsd --tree"
-
-# bat instead of cat
-alias cat="bat --paging=never"
-
-# quick health check loop
-# usage: healthcheck http://my-service:3000/health
-healthcheck() {
-    watch -n 2 "curl -s $1 | jq ."
-}
-EOF
+COPY .bashrc_extras /tmp/.bashrc_extras
+RUN cat /tmp/.bashrc_extras >> /root/.bashrc
 
 WORKDIR /workspace
 
