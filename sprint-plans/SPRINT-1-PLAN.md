@@ -7,7 +7,7 @@
 
 ## Goal
 
-[One or two sentences on what your team will have working by end of sprint. Be specific. "Order service, restaurant service, and synchronous call between them running in Docker Compose with health endpoints" is good. "Get stuff working" is not.]
+Initial setup of express server, routes, docker files, compose file, and db connection.
 
 ---
 
