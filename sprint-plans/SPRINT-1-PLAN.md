@@ -1,5 +1,4 @@
-# Sprint 1 Plan — [Team Name]
-
+# Sprint 1 Plan — Team 1
 **Sprint:** 1 — Foundation  
 **Dates:** 04.07 → 04.14  
 **Written:** 04.07 in class
