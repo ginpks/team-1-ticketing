@@ -4,7 +4,7 @@ import redis from 'redis'
 const app = express()
 const port = Number(process.env.PORT) || 3000
 const queueName = process.env.QUEUE_NAME || 'purchase_queue'
-const redisClient = redis.createClient({ url: 'redis://redis:6379' })
+const client = redis.createClient({ url: 'redis://redis:6379' })
 
 app.use(express.json())
 
@@ -14,7 +14,7 @@ client.on('error', err => {
 
 app.get('/healthz', async (_req, res) => {
   try {
-    // await client.ping() to be uncommented when redis is set up in compose.yml
+    await client.ping()
     res.status(200).json({ status: 'ok', 
                            service: 'ticket-purchase',
                            timeStamp: new Date().toISOString(),
