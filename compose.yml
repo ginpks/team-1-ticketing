@@ -51,7 +51,7 @@ services:
 
   api:
     build:
-      context: ./api
+      context: ./services/api
       dockerfile: Dockerfile
     container_name: api
     restart: unless-stopped
@@ -67,7 +67,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    # Holmes has no ports — access it via: docker compose exec holmes bash
 
   # ── Add your services here ─────────────────────────────────────────────────
   #
