@@ -48,6 +48,25 @@ services:
       - team-net
     environment:
       - TERM=xterm-256color
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - team-net
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     # Holmes has no ports — access it via: docker compose exec holmes bash
 
   # ── Add your services here ─────────────────────────────────────────────────
