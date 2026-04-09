@@ -90,6 +90,13 @@ app.get("/health", async (_req, res) => {
 
 app.post("/payments/validate", async (req, res) => {
   const { userId, eventId, amount, cardToken } = req.body;
+  const idempotencyKey = req.header("Idempotency-Key");
+
+  if (!idempotencyKey) {
+    return res.status(400).json({
+      error: "Idempotency-Key header is required",
+    });
+  }
 
   if (!userId || !eventId || amount == null || !cardToken) {
     return res.status(400).json({
@@ -104,16 +111,31 @@ app.post("/payments/validate", async (req, res) => {
   }
 
   try {
-    // Simulated payment decision for Sprint 1
+    const existingPayment = await pool.query(
+      `
+      SELECT id, idempotency_key, user_id, event_id, amount, status, created_at
+      FROM payments
+      WHERE idempotency_key = $1
+      `,
+      [idempotencyKey]
+    );
+
+    if (existingPayment.rows.length > 0) {
+      return res.status(200).json({
+        message: "duplicate request - returning existing payment",
+        payment: existingPayment.rows[0],
+      });
+    }
+
     const approved = true;
 
     const result = await pool.query(
       `
-      INSERT INTO payments (user_id, event_id, amount, card_token, status)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, user_id, event_id, amount, status, created_at
+      INSERT INTO payments (idempotency_key, user_id, event_id, amount, card_token, status)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, idempotency_key, user_id, event_id, amount, status, created_at
       `,
-      [userId, eventId, amount, cardToken, approved ? "approved" : "declined"]
+      [idempotencyKey, userId, eventId, amount, cardToken, approved ? "approved" : "declined"]
     );
 
     if (!approved) {
@@ -128,7 +150,7 @@ app.post("/payments/validate", async (req, res) => {
       payment: result.rows[0],
     });
   } catch (err) {
-    console.error("Payment insert error:", err.message);
+    console.error("Payment validation error:", err.message);
     return res.status(500).json({
       error: "failed to process payment",
     });

@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS payments (
   id SERIAL PRIMARY KEY,
+  idempotency_key TEXT UNIQUE NOT NULL,
   user_id TEXT NOT NULL,
   event_id TEXT NOT NULL,
   amount NUMERIC(10,2) NOT NULL,
