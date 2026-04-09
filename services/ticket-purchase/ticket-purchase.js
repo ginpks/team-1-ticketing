@@ -3,7 +3,7 @@ import redis from 'redis'
 
 const app = express()
 const port = Number(process.env.PORT) || 3000
-const queueName = process.env.QUEUE_NAME || 'purchase_queue'
+const queueName = process.env.QUEUE_NAME || 'ticket-purchase-queue'
 const client = redis.createClient({ url: 'redis://redis:6379' })
 
 app.use(express.json())
