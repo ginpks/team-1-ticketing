@@ -36,6 +36,7 @@ services:
   # are accessible without copying them into the container.
   #
   # See holmes/README.md for a full tool reference.
+
   holmes:
     build:
       context: ./holmes
@@ -61,12 +62,55 @@ services:
       - team-net
     environment:
       - PORT=3000
+      - SERVICE_NAME=payment-service
+      - DATABASE_URL=postgres://app:secret@api-db:5432/payments
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      api-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  api-db:
+    image: postgres:16
+    container_name: api-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: payments
+    volumes:
+      - api-db-data:/var/lib/postgresql/data
+      - ./services/api/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  api-db-data:
 
   # ── Add your services here ─────────────────────────────────────────────────
   #
