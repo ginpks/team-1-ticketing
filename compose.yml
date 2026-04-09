@@ -68,6 +68,37 @@ services:
       retries: 3
       start_period: 10s
 
+  ticket-purchase:
+    build:
+      context: ./services/ticket-purchase
+      dockerfile: Dockerfile
+    container_name: ticket-purchase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - team-net
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    redis:
+      image: redis:7
+      container_name: redis
+      restart: unless-stopped
+      networks:
+        - team-net
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+
   # ── Add your services here ─────────────────────────────────────────────────
   #
   # Pattern for each service:
