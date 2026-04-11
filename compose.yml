@@ -80,25 +80,29 @@ services:
       - team-net
     environment:
       - PORT=3000
-      - queue_name = ticket-purchase-queue
+      - QUEUE_NAME=ticket-purchase-queue
+      # - DATABASE_URL=
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
 
-    redis:
-      image: redis:7
-      container_name: redis
-      restart: unless-stopped
-      networks:
-        - team-net
-      healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
-        interval: 5s
-        timeout: 3s
-        retries: 5
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # ── Add your services here ─────────────────────────────────────────────────
   #

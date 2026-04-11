@@ -1,7 +1,10 @@
 import express from 'express'
 import redis from 'redis'
+import pkg from 'pg'
 
 const app = express()
+const { Pool } = pkg
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const port = Number(process.env.PORT) || 3000
 const queueName = process.env.QUEUE_NAME || 'ticket-purchase-queue'
 const client = redis.createClient({ url: 'redis://redis:6379' })
@@ -12,22 +15,57 @@ client.on('error', err => {
   console.error('Redis error:', err.message)
 })
 
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL is not set')
+}
+
 app.get('/healthz', async (_req, res) => {
-  try {
-    await client.ping()
-    res.status(200).json({ status: 'ok', 
-                           service: 'ticket-purchase',
-                           timeStamp: new Date().toISOString(),
-                           queueName })
-  } catch (err) {
-    res.status(503).json({ status: 'not-ready',
-                           service: 'ticket-purchase',
-                           timeStamp: new Date().toISOString(),
-                           queueName,
-                           error: err.message })
-  } 
+    const checks = {}
+    let healthy = true
+
+    await Promise.all([
+        // Check Redis connection
+        (async () => { 
+            try {
+                const start_time = Date.now()
+                await client.ping()
+                checks.redis = { status: 'healthy', latency_ms: Date.now() - start_time }
+            } catch (err) {
+                healthy = false
+                checks.redis = { status: 'unhealthy', error: err.message }
+            }
+        })(),
+
+        // Check DB connection
+        (async () => {
+            try {
+                const start_time = Date.now()
+                await pool.query('SELECT 1')
+                checks.database = { status: 'healthy', latency_ms: Date.now() - start_time }
+            } catch (err) {
+                healthy = false
+                checks.database = { status: 'unhealthy', error: err.message }
+            }
+        })()
+    ])
+
+    res.status(healthy ? 200 : 503).json({
+        status: healthy ? 'healthy' : 'unhealthy',
+        service: 'ticket-purchase',
+        queueName,
+        timestamp: new Date().toISOString(),
+        uptime_seconds: Math.floor(process.uptime()),
+        checks
+    })
 })
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Ticket Purchase Service listening on port ${port}`);
+
+  try {
+    await client.connect()
+    console.log('Connected to Redis successfully')
+  } catch (err) {
+    console.error('Failed to connect to Redis:', err.message)
+  }
 });
