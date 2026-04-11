@@ -1,13 +1,13 @@
 {
   "name": "event-catalog",
   "version": "1.0.0",
-  "description": "",
+  "description": "Event database for team-1-ticketing",
   "license": "ISC",
-  "author": "",
+  "author": "Tun Lin",
   "type": "module",
   "main": "event-catalog.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node init.js"
   },
   "dependencies": {
     "dotenv": "^17.4.1",

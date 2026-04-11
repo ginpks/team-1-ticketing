@@ -1,10 +1,10 @@
-import { eventPool } from "./event-catalog";
+import { eventPool, storeEvent } from "./event-catalog.js";
 
 const init = async () => {
   const client = await eventPool.connect();
 
   const eventTable = `CREATE TABLE IF NOT EXISTS events (
-  event_id UUID PRIMARY KEY,
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   start_time TIMESTAMP NOT NULL,
   end_time TIMESTAMP,
@@ -13,7 +13,7 @@ const init = async () => {
   created_at TIMESTAMP DEFAULT NOW());`;
 
   const seatTable = `CREATE TABLE IF NOT EXISTS seats (
-  seat_id UUID PRIMARY KEY,
+  seat_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID REFERENCES events(event_id) ON DELETE CASCADE,
   seat_number TEXT NOT NULL,
   section TEXT,
@@ -35,4 +35,23 @@ const init = async () => {
   }
 };
 
+//create tables
 await init();
+
+//add event
+const event = {
+  name: "Concert",
+  startTime: "2026-04-11T14:30:00Z",
+  endTime: "2026-04-11T16:00:00Z",
+  venueName: "MSG",
+  venueAddress: "NYC",
+};
+
+const seat = {
+  number: "1E",
+  section: "E",
+  price: 12.22,
+  status: "available",
+};
+
+await storeEvent(event, seat);
