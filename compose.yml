@@ -139,7 +139,7 @@ services:
     environment:
       - EVENT_DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
     ports:
-    - "3003:3003"
+    - "3004:3004"
     networks:
     - team-net
 
