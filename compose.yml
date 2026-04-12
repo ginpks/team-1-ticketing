@@ -1,5 +1,17 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # COMPSCI 426 — Team Project compose.yml
+#
+# This file defines the Holmes investigation container and a shared network.
+# Add your own services below the "Add your services here" section.
+#
+# Every service you add must be attached to `team-net` so it is reachable
+# from holmes by service name.
+#
+# Quick reference:
+#   Start everything:          docker compose up --build
+#   Open a shell in holmes:    docker compose exec holmes bash
+#   View logs:                 docker compose logs -f
+#   Check health:              docker compose ps
 # ─────────────────────────────────────────────────────────────────────────────
 
 networks:
@@ -8,6 +20,22 @@ networks:
 
 services:
 
+  # ── Holmes — System Investigation Container ────────────────────────────────
+  # A persistent container with curl, wget, jq, k6, psql, redis-cli, Node,
+  # Python, bat, lsd, fd, ripgrep, Neovim + LazyVim, and more.
+  #
+  # Use it to inspect and test your services from inside the Docker network:
+  #
+  #   docker compose exec holmes bash
+  #   curl http://order-service:3000/health | jq .
+  #   psql postgres://user:pass@postgres:5432/mydb
+  #   redis-cli -h redis ping
+  #   k6 run /workspace/k6/sprint-1.js
+  #
+  # Your repo root is mounted at /workspace, so all k6 scripts and files
+  # are accessible without copying them into the container.
+  #
+  # See holmes/README.md for a full tool reference.
   holmes:
     build:
       context: ./holmes
@@ -33,39 +61,11 @@ services:
       - team-net
     environment:
       - PORT=3000
-      - SERVICE_NAME=payment-service
-      - DATABASE_URL=postgres://app:secret@api-db:5432/payments
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      api-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
-
-  api-db:
-    image: postgres:16
-    container_name: api-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: payments
-    volumes:
-      - api-db-data:/var/lib/postgresql/data
-      - ./services/api/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    networks:
-      - team-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d payments"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
       start_period: 10s
 
   ticket-purchase:
@@ -82,7 +82,6 @@ services:
       - PORT=3001
       - QUEUE_NAME=ticket-purchase-queue
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
-      - REDIS_URL=redis://redis:6379
     depends_on:
       redis:
         condition: service_healthy
@@ -96,7 +95,7 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: redis
     restart: unless-stopped
     networks:
@@ -107,6 +106,32 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── Add your services here ─────────────────────────────────────────────────
+  #
+  # Pattern for each service:
+  #
+  # your-service:
+  #   build: ./your-service
+  #   container_name: your-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3001:3001"          # expose on host for local testing
+  #   networks:
+  #     - team-net             # REQUIRED — makes it reachable from holmes
+  #   environment:
+  #     - DATABASE_URL=postgres://user:pass@postgres:5432/yourdb
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 15s
   purchase-db:
     build: ./db/purchase
     depends_on:
@@ -118,25 +143,43 @@ services:
       - "3002:3002"
     networks:
       - team-net
-
+    
+  # ── Postgres template ──────────────────────────────────────────────────────
+  #
   purchasedb:
-    image: postgres:16
-    container_name: purchasedb
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: purchasedb
-    volumes:
-      - purchasedb-data:/var/lib/postgresql/data
-    networks:
-      - team-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
+     image: postgres:16
+     container_name: purchasedb
+     restart: unless-stopped
+     environment:
+       POSTGRES_USER: user
+       POSTGRES_PASSWORD: pass
+       POSTGRES_DB: purchasedb
+     volumes:
+       - purchasedb:/var/lib/postgresql/data
+     networks:
+       - team-net
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+       interval: 5s
+       timeout: 3s
+       retries: 5
+  #
+  # ── Redis template ─────────────────────────────────────────────────────────
+  #
+  # redis:
+  #   image: redis:7
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   networks:
+  #     - team-net
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+    
+# ── Named volumes ──────────────────────────────────────────────────────────────
+# Declare a volume for each database here, e.g.:
+#
 volumes:
-  api-db-data:
-  purchasedb-data:
+   purchasedb:
