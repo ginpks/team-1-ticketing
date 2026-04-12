@@ -1,4 +1,5 @@
 # Sprint 1 Plan — Team 1
+
 **Sprint:** 1 — Foundation  
 **Dates:** 04.07 → 04.14  
 **Written:** 04.07 in class
@@ -13,11 +14,14 @@ Initial setup of express server, routes, docker files, compose file, and db conn
 
 ## Ownership
 
-| Team Member | Files / Directories Owned This Sprint           |
-| ----------- | ----------------------------------------------- |
-| Gin Park and Arkar Myint      | `[service-dir]/`, `[service-dir]/db/schema.sql` |
-| Din Masic      | `[service-dir]/`, `compose.yml` additions       |
-| Sidharth Jain and Aryan Vakil      | `k6/sprint-1.js`, `[worker-dir]/`               |
+| Team Member                   | Files / Directories Owned This Sprint |
+| ----------------------------- | ------------------------------------- |
+| Gin Park and Vihaan Sejwani   | `service/api/`                        |
+| Din Masic and Arkar Myint     | `service/payment/`                    |
+| Sidharth Jain and Aryan Vakil | `service/ticket-purchase/`            |
+| Mark Gallant                  | `k6/sprint-1.js`                      |
+| Tun Lin Naine                 | `db/purchaseDB`,                      |
+| Everyone                      | `compose.yml`                         |
 
 Each person must have meaningful commits in the paths they claim. Ownership is verified by:
 
@@ -29,25 +33,39 @@ git log --author="Name" --oneline -- path/to/directory/
 
 ## Tasks
 
-### Vihaan Sejwani
+### Gin Park and Vihaan Sejwani
 
-- [ ] Set up `[service]/` with Express + Postgres connection
-- [ ] Implement `GET /health` with DB check
-- [ ] Write `db/schema.sql` and seed script
-- [ ] Add `healthcheck` directive to `compose.yml`
+- [ ] Set up `service/api` with Express
+- [ ] Set up `service/event-catalogue` with Express
+- [ ] Set up `redis` in compose + health checkpoint
+- [ ] Implement `GET /health` for api
+- [ ] Implement `GET /health` for event-catalogue
 
-### Tun Lin Naine
+### Din Masic and Arkar Myint
 
-- [ ] Set up `[service]/` with Express + Redis connection
-- [ ] Implement `GET /health` with Redis check
-- [ ] Implement `GET /[resource]` — stub returning placeholder data
-- [ ] Test synchronous call to [other service]
+- [ ] Set up `service/payment`
+- [ ] Implement `GET /health` with [Whatever this depends on]
+- [ ] Test synchronous call to [Ticket purchase]
+
+### Sidharth Jain and Aryan Vakil
+
+- [ ] Set up `service/ticket-purchase`
+- [ ] Implement `GET /health` with [Whatever this depends on]
+- [ ] Test synchronous call to [Payment Service]
 
 ### Mark Gallant
 
-- [ ] Wire `depends_on: condition: service_healthy` in `compose.yml`
 - [ ] Write `k6/sprint-1.js` baseline load test
+
+### Tun Lin Naine
+
+- [ ] Set up `db/purchase-db`
+- [ ] Set up `db/event-catalogue-db`
+
+### Everyone
+
 - [ ] Write `README.md` startup instructions and endpoint list
+- [ ] Add their service's compose.yml file
 
 ---
 
