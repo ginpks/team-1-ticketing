@@ -1,0 +1,16 @@
+{
+  "name": "purchasedb",
+  "version": "1.0.0",
+  "description": "Database for the purchase API, this contains functions to interact with db",
+  "license": "ISC",
+  "author": "Tun Lin",
+  "type": "module",
+  "main": "purchase.js",
+  "scripts": {
+    "start": "node init.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "pg": "^8.20.0"
+  }
+}
