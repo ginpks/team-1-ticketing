@@ -19,7 +19,7 @@ if (!process.env.DATABASE_URL) {
   console.error('DATABASE_URL is not set')
 }
 
-app.get('/healthz', async (_req, res) => {
+app.get('/health', async (_req, res) => {
     const checks = {}
     let healthy = true
 
@@ -57,6 +57,28 @@ app.get('/healthz', async (_req, res) => {
         uptime_seconds: Math.floor(process.uptime()),
         checks
     })
+})
+
+app.get('/purchases/:id', async (req, res) => {
+    const purchaseId = Number(req.params.id)
+
+    if (!Number.isInteger(purchaseId) || purchaseId <= 0) {
+        return res.status(400).json({ error: 'Invalid purchase ID' })
+    }
+
+    try {
+        const result = await pool.query('SELECT status FROM purchases WHERE id = $1', [purchaseId])
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Purchase not found.' })
+        }
+        return res.json({
+            id: purchaseId,
+            status: result.rows[0].status
+        })
+    } catch (err) {
+        console.error('Error fetching purchase status:', err.message)
+        return res.status(500).json({ error: 'Failed to fetch purchase status.' })
+    }
 })
 
 app.listen(port, async () => {
