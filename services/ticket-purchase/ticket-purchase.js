@@ -19,6 +19,15 @@ if (!process.env.DATABASE_URL) {
   console.error('DATABASE_URL is not set')
 }
 
+const publishPurchaseConfirmed = async (message) => {
+  try {
+    await client.publish('purchases:confirmed', JSON.stringify(message))
+    console.log('Published purchase confirmation')
+  } catch (err) {
+    console.error('Failed to publish purchase confirmation:', err.message)
+  }
+}
+
 app.get('/health', async (_req, res) => {
     const checks = {}
     let healthy = true
