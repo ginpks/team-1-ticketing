@@ -75,18 +75,20 @@ services:
     container_name: ticket-purchase
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     networks:
       - team-net
     environment:
-      - PORT=3000
+      - PORT=3001
       - QUEUE_NAME=ticket-purchase-queue
       # - DATABASE_URL=
     depends_on:
       redis:
         condition: service_healthy
+      # postgres:
+      #   condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
