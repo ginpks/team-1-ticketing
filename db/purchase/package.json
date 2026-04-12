@@ -1,9 +1,9 @@
 {
-  "name": "db",
+  "name": "purchasedb",
   "version": "1.0.0",
-  "description": "",
+  "description": "Database for the purchase API, this contains functions to interact with db",
   "license": "ISC",
-  "author": "",
+  "author": "Tun Lin",
   "type": "module",
   "main": "purchase.js",
   "scripts": {
