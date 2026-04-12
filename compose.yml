@@ -161,7 +161,7 @@ services:
      container_name: eventdb
      restart: unless-stopped
      environment:
-       POSTGRES_USR: usr
+       POSTGRES_USER: user
        POSTGRES_PASSWORD: pass
        POSTGRES_DB: eventdb
      volumes:
