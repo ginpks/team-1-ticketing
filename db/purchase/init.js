@@ -21,7 +21,7 @@ const createTable = async () => {
   end_time TIMESTAMP NOT NULL
 );`);
 
-  await client.query(`CREATE TABLE payments (
+  await client.query(`CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
