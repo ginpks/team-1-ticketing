@@ -35,6 +35,7 @@ export const storePurchase = async (purchase, reservation, payment) => {
     );
 
     await client.query("COMMIT");
+    return purchaseId;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

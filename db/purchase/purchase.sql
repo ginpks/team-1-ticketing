@@ -1,5 +1,5 @@
 CREATE TABLE purchases (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id SERIAL PRIMARY KEY,
   amount NUMERIC(10,2) NOT NULL,
   status TEXT NOT NULL,
   idempotency_key TEXT NOT NULL UNIQUE,
@@ -18,7 +18,7 @@ CREATE TABLE reservations (
 
 CREATE TABLE payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+  purchase_id INT NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
   amount NUMERIC(10,2) NOT NULL,
   transaction_ref TEXT,

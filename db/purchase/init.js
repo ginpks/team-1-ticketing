@@ -4,7 +4,7 @@ import "dotenv/config";
 const createTable = async () => {
   const client = await purchasePool.connect();
   await client.query(`CREATE TABLE IF NOT EXISTS purchases (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id SERIAL PRIMARY KEY,
   amount NUMERIC(10,2) NOT NULL,
   status TEXT NOT NULL,
   idempotency_key TEXT NOT NULL UNIQUE,
@@ -14,7 +14,7 @@ const createTable = async () => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS reservations (
   reservation_id SERIAL PRIMARY KEY,
-  purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+  purchase_id INT NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
   event TEXT NOT NULL,
   seat TEXT NOT NULL,
   start_time TIMESTAMP NOT NULL,
@@ -23,7 +23,7 @@ const createTable = async () => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+  purchase_id INT NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
   amount NUMERIC(10,2) NOT NULL,
   transaction_ref TEXT,
@@ -39,7 +39,7 @@ const init = async () => {
     const purchase = {
       amount: 22.12,
       status: "PENDING",
-      idempotencyKey: "1223EEq",
+      idempotencyKey: "1223EEq2",
     };
     const reservation = {
       event: "MOVIE",
@@ -52,7 +52,8 @@ const init = async () => {
       amount: 22.12,
       transactionRef: "qqe213",
     };
-    await storePurchase(purchase, reservation, payment);
+    const purchaseId = await storePurchase(purchase, reservation, payment);
+    console.log(purchaseId);
   } catch (err) {
     console.error(err);
   }
