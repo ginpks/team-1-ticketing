@@ -1,8 +1,8 @@
 import { Pool } from "pg";
 import "dotenv/config";
-
+const url = process.env.EVENT_DATABASE_URL;
 export const eventPool = new Pool({
-  connectionString: process.env.EVENT_DATABASE_URL,
+  connectionString: url,
 });
 
 export const storeEvent = async (event, seat) => {
