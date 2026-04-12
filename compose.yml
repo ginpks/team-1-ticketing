@@ -68,6 +68,44 @@ services:
       retries: 3
       start_period: 10s
 
+  ticket-purchase:
+    build:
+      context: ./services/ticket-purchase
+      dockerfile: Dockerfile
+    container_name: ticket-purchase
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    networks:
+      - team-net
+    environment:
+      - PORT=3001
+      - QUEUE_NAME=ticket-purchase-queue
+      - DATABASE_URL= postgres://user:pass@purchasedb:5432/purchasedb
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ── Add your services here ─────────────────────────────────────────────────
   #
   # Pattern for each service:
