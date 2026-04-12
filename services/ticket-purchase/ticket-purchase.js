@@ -68,6 +68,126 @@ app.get('/health', async (_req, res) => {
     })
 })
 
+app.post('/purchases', async (req, res) => {
+  const { idempotency_key, event, seat, start_time, end_time, amount } = req.body
+
+  // Validate required fields
+  if (!idempotency_key || !event || !seat || !start_time || !end_time || !amount) {
+    return res.status(400).json({ error: 'Missing required fields: idempotency_key, event, seat, start_time, end_time, amount' })
+  }
+
+  try {
+    // Step 1: Check for duplicate — same idempotency_key means same request
+    const existing = await pool.query(
+      'SELECT id, status, amount FROM purchases WHERE idempotency_key = $1',
+      [idempotency_key]
+    )
+
+    if (existing.rows.length > 0) {
+      // Already seen this request — return existing purchase, do NOT charge again
+      return res.status(200).json({
+        message: 'Duplicate request — returning existing purchase',
+        duplicate: true,
+        purchase: existing.rows[0]
+      })
+    }
+
+    // Step 2: Create the purchase record with status 'pending'
+    const purchaseResult = await pool.query(
+      `INSERT INTO purchases (amount, status, idempotency_key)
+       VALUES ($1, 'pending', $2)
+       RETURNING id, amount, status, idempotency_key, created_at`,
+      [amount, idempotency_key]
+    )
+    const purchase = purchaseResult.rows[0]
+
+    // Step 3: Create the reservation record (the actual seat booking)
+    await pool.query(
+      `INSERT INTO reservations (purchase_id, event, seat, start_time, end_time)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [purchase.id, event, seat, start_time, end_time]
+    )
+
+    // Step 4: Call the Payment Service synchronously
+    let paymentStatus = 'failed'
+    let transactionRef = null
+
+    try {
+      const paymentResponse = await fetch('http://payment-service:3002/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          purchase_id: purchase.id,
+          amount,
+          idempotency_key
+        })
+      })
+
+      const paymentData = await paymentResponse.json()
+
+      if (paymentResponse.ok && paymentData.status === 'success') {
+        paymentStatus = 'success'
+        transactionRef = paymentData.transaction_ref || null
+      }
+    } catch (paymentErr) {
+      // Payment service unreachable — treat as failed
+      console.error('Payment service error:', paymentErr.message)
+    }
+
+    // Step 5: Record the payment result
+    await pool.query(
+      `INSERT INTO payments (purchase_id, status, amount, transaction_ref)
+       VALUES ($1, $2, $3, $4)`,
+      [purchase.id, paymentStatus, amount, transactionRef]
+    )
+
+    // Step 6: Update purchase status based on payment outcome
+    const finalStatus = paymentStatus === 'success' ? 'confirmed' : 'failed'
+    await pool.query(
+      `UPDATE purchases SET status = $1, updated_at = NOW() WHERE id = $2`,
+      [finalStatus, purchase.id]
+    )
+
+    // Step 7: Publish to Redis if confirmed, push to waitlist queue if failed
+    if (finalStatus === 'confirmed') {
+      await publishPurchaseConfirmed({
+        purchase_id: purchase.id,
+        event,
+        seat,
+        amount,
+        idempotency_key,
+        confirmed_at: new Date().toISOString()
+      })
+    } else {
+      // Push to waitlist queue so next person can get the seat
+      await client.lPush('waitlist-queue', JSON.stringify({
+        event,
+        seat,
+        released_at: new Date().toISOString()
+      }))
+    }
+
+    // Step 8: Return the result
+    return res.status(201).json({
+      duplicate: false,
+      purchase: {
+        id: purchase.id,
+        status: finalStatus,
+        amount: purchase.amount,
+        idempotency_key: purchase.idempotency_key,
+        event,
+        seat,
+        payment_status: paymentStatus,
+        transaction_ref: transactionRef
+      }
+    })
+
+  } catch (err) {
+    console.error('Error creating purchase:', err.message)
+    return res.status(500).json({ error: 'Failed to create purchase' })
+  }
+})
+
 app.get('/purchases/:id', async (req, res) => {
     const purchaseId = Number(req.params.id)
 
