@@ -13,7 +13,6 @@
 #   View logs:                 docker compose logs -f
 #   Check health:              docker compose ps
 # ─────────────────────────────────────────────────────────────────────────────
-
 networks:
   team-net:
     driver: bridge
@@ -101,6 +100,29 @@ services:
       retries: 3
       start_period: 10s
 
+  event-catalogue:
+    build:
+      context: ./services/event-catalogue
+      dockerfile: Dockerfile
+    container_name: event-catalogue
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    networks:
+      - team-net
+    environment:
+      - PORT=3003
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   redis:
     image: redis:7
     container_name: redis
@@ -139,6 +161,18 @@ services:
   #     timeout: 5s
   #     retries: 3
   #     start_period: 15s
+  event-db:
+    build: ./db/event-catalog
+    depends_on:
+      eventdb:
+        condition: service_healthy
+    environment:
+      - EVENT_DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
+    ports:
+      - "3004:3004"
+    networks:
+      - team-net
+
   purchase-db:
     build: ./db/purchase
     depends_on:
@@ -150,6 +184,26 @@ services:
       - "3002:3002"
     networks:
       - team-net
+
+  # ── Postgres template ──────────────────────────────────────────────────────
+  #
+  eventdb:
+    image: postgres:16
+    container_name: eventdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: eventdb
+    volumes:
+      - eventdb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # ── Postgres template ──────────────────────────────────────────────────────
   #
@@ -189,4 +243,5 @@ services:
 # Declare a volume for each database here, e.g.:
 #
 volumes:
+  eventdb:
   purchasedb:
