@@ -117,8 +117,11 @@ services:
     environment:
       - PORT=3003
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
     depends_on:
       redis:
+        condition: service_healthy
+      eventdb:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
