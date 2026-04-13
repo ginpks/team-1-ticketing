@@ -15,6 +15,10 @@ client.on("error", (err) => {
   console.error("Redis error:", err.message);
 });
 
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not set");
+}
+
 app.get("/", (_req, res) => {
   res.json({
     service: "event-catalogue",
@@ -27,20 +31,37 @@ app.get("/health", async (_req, res) => {
   const checks = {};
   let healthy = true;
 
-  try {
-    const startTime = Date.now();
-    await client.ping();
-    checks.redis = {
-      status: "healthy",
-      latency_ms: Date.now() - startTime,
-    };
-  } catch (err) {
-    healthy = false;
-    checks.redis = {
-      status: "unhealthy",
-      error: err.message,
-    };
-  }
+  await Promise.all([
+    // Check Redis connection
+    (async () => {
+      try {
+        const start_time = Date.now();
+        await client.ping();
+        checks.redis = {
+          status: "healthy",
+          latency_ms: Date.now() - start_time,
+        };
+      } catch (err) {
+        healthy = false;
+        checks.redis = { status: "unhealthy", error: err.message };
+      }
+    })(),
+
+    // Check DB connection
+    (async () => {
+      try {
+        const start_time = Date.now();
+        await pool.query("SELECT 1");
+        checks.database = {
+          status: "healthy",
+          latency_ms: Date.now() - start_time,
+        };
+      } catch (err) {
+        healthy = false;
+        checks.database = { status: "unhealthy", error: err.message };
+      }
+    })(),
+  ]);
 
   res.status(healthy ? 200 : 503).json({
     status: healthy ? "healthy" : "unhealthy",
