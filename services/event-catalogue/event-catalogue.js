@@ -84,6 +84,31 @@ app.get("/events", async (_req, res) => {
   }
 });
 
+// ------------- GET events/:event_id -------------
+app.get("/events/:event_id", async (req, res) => {
+  const { event_id } = req.params;
+
+  if (!event_id) {
+    return res.status(400).json({ error: "event_id is required" });
+  }
+
+  try {
+    const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
+      event_id,
+    ]);
+    if (event.rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    const seats = await pool.query("SELECT * FROM seats WHERE event_id = $1", [
+      event_id,
+    ]);
+    res.status(200).json({ event: event.rows[0], seats: seats.rows });
+  } catch (err) {
+    console.error("Error fetching event:", err.message);
+    res.status(500).json({ error: "Failed to fetch event" });
+  }
+});
+
 app.listen(port, async () => {
   console.log(`Event Catalogue Service listening on port ${port}`);
 
