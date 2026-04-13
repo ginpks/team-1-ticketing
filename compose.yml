@@ -81,6 +81,9 @@ services:
       - PORT=3001
       - QUEUE_NAME=ticket-purchase-queue
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+      - PAYMENT_SERVICE_URL=http://payment-service:3002
     depends_on:
       redis:
         condition: service_healthy
