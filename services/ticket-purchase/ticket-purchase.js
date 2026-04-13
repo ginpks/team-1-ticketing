@@ -2,6 +2,8 @@ import express from 'express'
 import redis from 'redis'
 import pkg from 'pg'
 
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3000'
+const app = express()
 const { Pool } = pkg
 const app = express()
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
@@ -174,6 +176,101 @@ app.post('/purchases', async (req, res) => {
   }
 })
 
+app.post('/purchases', async (req, res) => {
+  const { amount, idempotencyKey, event, seat, startTime, endTime } = req.body
+
+  if (!amount || !idempotencyKey || !event || !seat || !startTime || !endTime) {
+    return res.status(400).json({
+      error: 'amount, idempotencyKey, event, seat, startTime, and endTime are required'
+    })
+  }
+
+  if (Number(amount) <= 0) {
+    return res.status(400).json({ error: 'amount must be greater than 0' })
+  }
+
+  // Idempotency check — same key returns existing purchase, no double charge
+  try {
+    const existing = await pool.query(
+      'SELECT id, status FROM purchases WHERE idempotency_key = $1',
+      [idempotencyKey]
+    )
+    if (existing.rows.length > 0) {
+      return res.status(200).json({
+        purchaseId: existing.rows[0].id,
+        status: existing.rows[0].status,
+        replayed: true
+      })
+    }
+  } catch (err) {
+    console.error('Idempotency check error:', err.message)
+    return res.status(500).json({ error: 'Failed to process purchase' })
+  }
+
+  // Call payment service first (per your group's agreed flow)
+  let paymentStatus, transactionRef
+  try {
+    const paymentRes = await fetch(`${PAYMENT_SERVICE_URL}/pay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    })
+    const paymentData = await paymentRes.json()
+    paymentStatus = paymentData.status
+    transactionRef = paymentData.transaction_ref
+  } catch (err) {
+    console.error('Payment service call failed:', err.message)
+    return res.status(502).json({ error: 'Payment service unreachable' })
+  }
+
+  const finalStatus = paymentStatus === 'success' ? 'confirmed' : 'failed'
+
+  // Store everything in one transaction
+  const dbClient = await pool.connect()
+  try {
+    await dbClient.query('BEGIN')
+
+    const purchaseResult = await dbClient.query(
+      `INSERT INTO purchases (amount, status, idempotency_key)
+       VALUES ($1, $2, $3) RETURNING id`,
+      [amount, finalStatus, idempotencyKey]
+    )
+    const purchaseId = purchaseResult.rows[0].id
+
+    await dbClient.query(
+      `INSERT INTO reservations (purchase_id, event, seat, start_time, end_time)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [purchaseId, event, seat, startTime, endTime]
+    )
+
+    await dbClient.query(
+      `INSERT INTO payments (purchase_id, status, amount, transaction_ref)
+       VALUES ($1, $2, $3, $4)`,
+      [purchaseId, paymentStatus, amount, transactionRef]
+    )
+
+    await dbClient.query('COMMIT')
+
+    if (finalStatus === 'confirmed') {
+      await publishPurchaseConfirmed({ purchaseId, event, seat, amount, transactionRef })
+    }
+
+    return res.status(finalStatus === 'confirmed' ? 201 : 402).json({
+      purchaseId,
+      status: finalStatus,
+      transactionRef
+    })
+  } catch (err) {
+    await dbClient.query('ROLLBACK')
+    console.error('Purchase transaction error:', err.message)
+    return res.status(500).json({ error: 'Failed to store purchase' })
+  } finally {
+    dbClient.release()
+  }
+})
+
+app.listen(port, async () => {
+  console.log(`Ticket Purchase Service listening on port ${port}`);
 // ── GET /purchases/:id ───────────────────────────────────────────────────────
 app.get('/purchases/:id', async (req, res) => {
   const purchaseId = Number(req.params.id)

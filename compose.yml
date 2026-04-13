@@ -18,7 +18,6 @@ networks:
     driver: bridge
 
 services:
-
   # ── Holmes — System Investigation Container ────────────────────────────────
   # A persistent container with curl, wget, jq, k6, psql, redis-cli, Node,
   # Python, bat, lsd, fd, ripgrep, Neovim + LazyVim, and more.
@@ -48,11 +47,11 @@ services:
     environment:
       - TERM=xterm-256color
 
-  api:
+  payment-service:
     build:
-      context: ./services/api
+      context: ./services/payment-service
       dockerfile: Dockerfile
-    container_name: api
+    container_name: payment-service
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -60,6 +59,14 @@ services:
       - team-net
     environment:
       - PORT=3000
+      - SERVICE_NAME=payment-service
+      - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      purchasedb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
@@ -81,13 +88,14 @@ services:
       - PORT=3001
       - QUEUE_NAME=ticket-purchase-queue
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
-      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
-      - PAYMENT_SERVICE_URL=http://payment-service:3002
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
     depends_on:
       redis:
         condition: service_healthy
       purchasedb:
+        condition: service_healthy
+      payment-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
@@ -165,9 +173,9 @@ services:
     environment:
       - EVENT_DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
     ports:
-    - "3004:3004"
+      - "3004:3004"
     networks:
-    - team-net
+      - team-net
 
   purchase-db:
     build: ./db/purchase
@@ -180,46 +188,46 @@ services:
       - "3002:3002"
     networks:
       - team-net
+
   # ── Postgres template ──────────────────────────────────────────────────────
   #
   eventdb:
-     image: postgres:16
-     container_name: eventdb
-     restart: unless-stopped
-     environment:
-       POSTGRES_USER: user
-       POSTGRES_PASSWORD: pass
-       POSTGRES_DB: eventdb
-     volumes:
-       - eventdb:/var/lib/postgresql/data
-     networks:
-       - team-net
-     healthcheck:
-       test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
-       interval: 5s
-       timeout: 3s
-       retries: 5
+    image: postgres:16
+    container_name: eventdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: eventdb
+    volumes:
+      - eventdb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
-    
   # ── Postgres template ──────────────────────────────────────────────────────
   #
   purchasedb:
-     image: postgres:16
-     container_name: purchasedb
-     restart: unless-stopped
-     environment:
-       POSTGRES_USER: user
-       POSTGRES_PASSWORD: pass
-       POSTGRES_DB: purchasedb
-     volumes:
-       - purchasedb:/var/lib/postgresql/data
-     networks:
-       - team-net
-     healthcheck:
-       test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
-       interval: 5s
-       timeout: 3s
-       retries: 5
+    image: postgres:16
+    container_name: purchasedb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: purchasedb
+    volumes:
+      - purchasedb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -234,10 +242,10 @@ services:
   #     interval: 5s
   #     timeout: 3s
   #     retries: 5
-    
+
 # ── Named volumes ──────────────────────────────────────────────────────────────
 # Declare a volume for each database here, e.g.:
 #
 volumes:
-   eventdb:
-   purchasedb:
+  eventdb:
+  purchasedb:
