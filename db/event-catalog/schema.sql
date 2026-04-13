@@ -1,21 +1,16 @@
 CREATE TABLE IF NOT EXISTS events (
-  id UUID PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
   start_time TIMESTAMP NOT NULL,
   end_time TIMESTAMP,
   venue_name TEXT NOT NULL,
   venue_address TEXT,
-  popularity_score INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
+  created_at TIMESTAMP DEFAULT NOW());`
 
 CREATE TABLE IF NOT EXISTS seats (
-  id UUID PRIMARY KEY,
-  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  seat_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID REFERENCES events(event_id) ON DELETE CASCADE,
   seat_number TEXT NOT NULL,
   section TEXT,
   price NUMERIC(10,2) NOT NULL,
-  status TEXT DEFAULT 'available'
-);
+  status TEXT DEFAULT 'available');`
