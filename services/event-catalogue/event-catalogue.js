@@ -109,6 +109,37 @@ app.get("/events/:event_id", async (req, res) => {
   }
 });
 
+// ------------- POST events -------------
+app.post("/events", async (req, res) => {
+  const { name, start_time, end_time, venue_name, venue_address } = req.body;
+  if (!name || !start_time || !venue_name) {
+    return res
+      .status(400)
+      .json({ error: "name, start_time and venue_name are required" });
+  }
+
+  const dbClient = await pool.connect();
+  try {
+    await dbClient.query("BEGIN");
+
+    const eventResult = await dbClient.query(
+      `INSERT INTO events (name, start_time, end_time, venue_name, venue_address)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [name, start_time, end_time, venue_name, venue_address],
+    );
+    const event = eventResult.rows[0];
+
+    await dbClient.query("COMMIT");
+    return res.status(201).json(event);
+  } catch (err) {
+    await dbClient.query("ROLLBACK");
+    console.error("Error creating event:", err.message);
+    return res.status(500).json({ error: "Failed to create event" });
+  } finally {
+    dbClient.release();
+  }
+});
+
 app.listen(port, async () => {
   console.log(`Event Catalogue Service listening on port ${port}`);
 
