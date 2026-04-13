@@ -54,4 +54,5 @@ const seat = {
   status: "available",
 };
 
-await storeEvent(event, seat);
+const id = await storeEvent(event, seat);
+console.log(id);

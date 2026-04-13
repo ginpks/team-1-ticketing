@@ -59,4 +59,5 @@ const init = async () => {
   }
 };
 
-await init(); //create purchase and reservation table
+const id = await init(); //create purchase and reservation table
+console.log(id);

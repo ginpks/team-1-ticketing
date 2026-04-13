@@ -1,6 +1,8 @@
 import { Pool } from "pg";
 import "dotenv/config";
+
 const url = process.env.EVENT_DATABASE_URL;
+
 export const eventPool = new Pool({
   connectionString: url,
 });
@@ -28,6 +30,7 @@ export const storeEvent = async (event, seat) => {
       [eventId, seat.number, seat.section, seat.price, seat.status],
     );
     await client.query("COMMIT");
+    return eventId;
   } catch (err) {
     await client.query("ROLLBACK");
     console.error(err);
