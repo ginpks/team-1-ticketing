@@ -54,7 +54,7 @@ services:
     container_name: payment-service
     restart: unless-stopped
     ports:
-      - "3002:3000"
+      - "3000:3000"
     networks:
       - team-net
     environment:
@@ -88,10 +88,14 @@ services:
       - PORT=3001
       - QUEUE_NAME=ticket-purchase-queue
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
     depends_on:
       redis:
         condition: service_healthy
       purchasedb:
+        condition: service_healthy
+      payment-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
