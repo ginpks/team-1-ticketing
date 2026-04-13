@@ -72,6 +72,18 @@ app.get("/health", async (_req, res) => {
   });
 });
 
+// ------------- GET events -------------
+app.get("/events", async (_req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM events");
+    // Did not put a check for empty array, that is not an error.
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching events:", err.message);
+    return res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
 app.listen(port, async () => {
   console.log(`Event Catalogue Service listening on port ${port}`);
 
