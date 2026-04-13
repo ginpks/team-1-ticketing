@@ -1,7 +1,10 @@
 import express from "express";
 import redis from "redis";
+import pkg from "pg";
 
 const app = express();
+const { Pool } = pkg;
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3003;
 const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
 const client = redis.createClient({ url: redisUrl });
