@@ -1,8 +1,8 @@
 {
-  "name": "team-1-api",
+  "name": "team-1-payment-service",
   "version": "1.0.0",
   "private": true,
-  "description": "Express API service for Team 1 ticketing",
+  "description": "Payment service for Team 1 ticketing",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -11,6 +11,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0"
   }
 }

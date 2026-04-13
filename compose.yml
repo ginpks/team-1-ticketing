@@ -19,7 +19,6 @@ networks:
     driver: bridge
 
 services:
-
   # ── Holmes — System Investigation Container ────────────────────────────────
   # A persistent container with curl, wget, jq, k6, psql, redis-cli, Node,
   # Python, bat, lsd, fd, ripgrep, Neovim + LazyVim, and more.
@@ -49,18 +48,26 @@ services:
     environment:
       - TERM=xterm-256color
 
-  api:
+  payment-service:
     build:
-      context: ./services/api
+      context: ./services/payment-service
       dockerfile: Dockerfile
-    container_name: api
+    container_name: payment-service
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3002:3000"
     networks:
       - team-net
     environment:
       - PORT=3000
+      - SERVICE_NAME=payment-service
+      - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      purchasedb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
@@ -166,26 +173,26 @@ services:
       - "3002:3002"
     networks:
       - team-net
-    
+
   # ── Postgres template ──────────────────────────────────────────────────────
   #
   purchasedb:
-     image: postgres:16
-     container_name: purchasedb
-     restart: unless-stopped
-     environment:
-       POSTGRES_USER: user
-       POSTGRES_PASSWORD: pass
-       POSTGRES_DB: purchasedb
-     volumes:
-       - purchasedb:/var/lib/postgresql/data
-     networks:
-       - team-net
-     healthcheck:
-       test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
-       interval: 5s
-       timeout: 3s
-       retries: 5
+    image: postgres:16
+    container_name: purchasedb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: purchasedb
+    volumes:
+      - purchasedb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -200,9 +207,9 @@ services:
   #     interval: 5s
   #     timeout: 3s
   #     retries: 5
-    
+
 # ── Named volumes ──────────────────────────────────────────────────────────────
 # Declare a volume for each database here, e.g.:
 #
 volumes:
-   purchasedb:
+  purchasedb:
