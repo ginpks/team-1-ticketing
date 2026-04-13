@@ -1,8 +1,10 @@
 import express from 'express'
 import redis from 'redis'
-import { storePurchase, purchasePool } from '../../db/purchase/purchase.js'
+import pkg from 'pg'
 
+const { Pool } = pkg
 const app = express()
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const port = Number(process.env.PORT) || 3001
 const queueName = process.env.QUEUE_NAME || 'ticket-purchase-queue'
 const client = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
@@ -30,9 +32,9 @@ app.get('/health', async (_req, res) => {
   await Promise.all([
     (async () => {
       try {
-        const start_time = Date.now()
+        const start = Date.now()
         await client.ping()
-        checks.redis = { status: 'healthy', latency_ms: Date.now() - start_time }
+        checks.redis = { status: 'healthy', latency_ms: Date.now() - start }
       } catch (err) {
         healthy = false
         checks.redis = { status: 'unhealthy', error: err.message }
@@ -40,9 +42,9 @@ app.get('/health', async (_req, res) => {
     })(),
     (async () => {
       try {
-        const start_time = Date.now()
-        await purchasePool.query('SELECT 1')
-        checks.database = { status: 'healthy', latency_ms: Date.now() - start_time }
+        const start = Date.now()
+        await pool.query('SELECT 1')
+        checks.database = { status: 'healthy', latency_ms: Date.now() - start }
       } catch (err) {
         healthy = false
         checks.database = { status: 'unhealthy', error: err.message }
@@ -71,12 +73,11 @@ app.post('/purchases', async (req, res) => {
   }
 
   try {
-    // Check for duplicate request
-    const existing = await purchasePool.query(
+    // Check for duplicate
+    const existing = await pool.query(
       'SELECT id, status, amount FROM purchases WHERE idempotency_key = $1',
       [idempotency_key]
     )
-
     if (existing.rows.length > 0) {
       return res.status(200).json({
         message: 'Duplicate request — returning existing purchase',
@@ -85,10 +86,9 @@ app.post('/purchases', async (req, res) => {
       })
     }
 
-    // Call Payment Service synchronously
+    // Call Payment Service
     let paymentStatus = 'failed'
     let transactionRef = null
-
     try {
       const paymentResponse = await fetch('http://payment-service:3002/payments', {
         method: 'POST',
@@ -106,14 +106,37 @@ app.post('/purchases', async (req, res) => {
 
     const finalStatus = paymentStatus === 'success' ? 'confirmed' : 'failed'
 
-    // Store purchase, reservation, and payment in a single transaction
-    const purchaseId = await storePurchase(
-      { amount, status: finalStatus, idempotencyKey: idempotency_key },
-      { event, seat, startTime: start_time, endTime: end_time },
-      { status: paymentStatus, amount, transactionRef }
-    )
+    // Store everything in a single transaction
+    const dbClient = await pool.connect()
+    let purchaseId
+    try {
+      await dbClient.query('BEGIN')
 
-    // Publish to Redis on success, push to waitlist on failure
+      const purchaseData = await dbClient.query(
+        `INSERT INTO purchases (amount, status, idempotency_key) VALUES ($1, $2, $3) RETURNING id`,
+        [amount, finalStatus, idempotency_key]
+      )
+      purchaseId = purchaseData.rows[0].id
+
+      await dbClient.query(
+        `INSERT INTO reservations (purchase_id, event, seat, start_time, end_time) VALUES ($1, $2, $3, $4, $5)`,
+        [purchaseId, event, seat, start_time, end_time]
+      )
+
+      await dbClient.query(
+        `INSERT INTO payments (purchase_id, status, amount, transaction_ref) VALUES ($1, $2, $3, $4)`,
+        [purchaseId, paymentStatus, amount, transactionRef]
+      )
+
+      await dbClient.query('COMMIT')
+    } catch (err) {
+      await dbClient.query('ROLLBACK')
+      throw err
+    } finally {
+      dbClient.release()
+    }
+
+    // Publish to Redis or push to waitlist
     if (finalStatus === 'confirmed') {
       await publishPurchaseConfirmed({
         purchase_id: purchaseId,
@@ -160,7 +183,7 @@ app.get('/purchases/:id', async (req, res) => {
   }
 
   try {
-    const result = await purchasePool.query(
+    const result = await pool.query(
       'SELECT id, status, amount, idempotency_key, created_at FROM purchases WHERE id = $1',
       [purchaseId]
     )
