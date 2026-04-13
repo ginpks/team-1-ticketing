@@ -18,7 +18,7 @@ const errorRate = new Rate("errors");
 // ── Configuration ─────────────────────────────────────────────────────────────
 // Update this URL to point to your main read endpoint.
 // From inside the holmes container, use the service name (not localhost).
-const TARGET_URL = "http://event-catalogue:3003";
+const TARGET_URL = "http://event-catalogue:3003/events";
 
 export const options = {
   // force k6 to collect the stats we want for the first sprint
@@ -53,7 +53,7 @@ export function handleSummary(data) {
 
     console.log("SPRINT-1 METRICS:");
     console.log(`p50: ${duration_values["med"]}ms`);
-    console.log(`p90: ${duration_values["p(95)"]}ms`);
+    console.log(`p95: ${duration_values["p(95)"]}ms`);
     console.log(`p99: ${duration_values["p(99)"]}ms`);
     console.log(`Requests/second: ${requests_per_second}`);
 
