@@ -48,14 +48,14 @@ services:
     environment:
       - TERM=xterm-256color
 
-  api:
+  payment-service:
     build:
-      context: ./services/api
+      context: ./services/payment-service
       dockerfile: Dockerfile
-    container_name: api
+    container_name: payment-service
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3002:3000"
     networks:
       - team-net
     environment:
