@@ -19,19 +19,19 @@ For POST 3000:/pay, 3001:/purchases
 
 | Team Member | What They Delivered                                     | Key Commits / PR       |
 | ----------- | ------------------------------------------------------- | ---------------------- |
-Tun Lin | purchase DB, event-catalog DB |[pr for purchase db] https://github.com/ginpks/team-1-ticketing/pull/8 ,[pr for event db] https://github.com/ginpks/team-1-ticketing/pull/14
+Tun Lin | purchase DB, event-catalog DB |[pr for purchase db] https://github.com/ginpks/team-1-ticketing/pull/8 ,[pr for event db] https://github.com/ginpks/team-1-ticketing/pull/14 |
 
-Aryan | /purchase/:id endpoint, setup express and redis for the purchase service, PublishPurchaseConfirm function,| [Ticket purchase service starter and status endpoint](https://github.com/ginpks/team-1-ticketing/pull/3), [Reconciliation after merge](https://github.com/ginpks/team-1-ticketing/pull/9), [Incorporate service and db](https://github.com/ginpks/team-1-ticketing/pull/10)
+Aryan | /purchase/:id endpoint, setup express and redis for the purchase service, PublishPurchaseConfirm function,| [Ticket purchase service starter and status endpoint](https://github.com/ginpks/team-1-ticketing/pull/3), [Reconciliation after merge](https://github.com/ginpks/team-1-ticketing/pull/9), [Incorporate service and db](https://github.com/ginpks/team-1-ticketing/pull/10) |
 
-Vihaan | Finished GET /events, GET /events/:event_id, POST /events endpoints. Added input validation, correct http responses including error handling and logging | https://github.com/ginpks/team-1-ticketing/pull/16
+Vihaan | Finished GET /events, GET /events/:event_id, POST /events endpoints. Added input validation, correct http responses including error handling and logging | https://github.com/ginpks/team-1-ticketing/pull/16 |
 
-Mark | k7 baseline script | https://github.com/ginpks/team-1-ticketing/pull/17
+Mark | k7 baseline script | https://github.com/ginpks/team-1-ticketing/pull/17 |
 
-Din | Payment Service, Ticket Request Service | https://github.com/ginpks/team-1-ticketing/pull/15
+Din | Payment Service, Ticket Request Service | https://github.com/ginpks/team-1-ticketing/pull/15 |
 
-Gin | API service, Event-catalogue service |[pr for API service] https://github.com/ginpks/team-1-ticketing/pull/1 ,[pr for Event-catalogue service] https://github.com/ginpks/team-1-ticketing/pull/14 
+Gin | API service, Event-catalogue service |[pr for API service] https://github.com/ginpks/team-1-ticketing/pull/1 ,[pr for Event-catalogue service] https://github.com/ginpks/team-1-ticketing/pull/14 | 
 
-Sidharth | POST /purchases, redis, purchase health check | https://github.com/ginpks/team-1-ticketing/pull/12
+Sidharth | POST /purchases, redis, purchase health check | https://github.com/ginpks/team-1-ticketing/pull/12 |
 
 
 Verify with:
@@ -44,11 +44,11 @@ git log --author="Name" --oneline -- path/to/directory/
 
 ## What Is Working
 
-- [ ] `docker compose up` starts all services without errors
-- [ ] `docker compose ps` shows every service as `(healthy)`
-- [ ] `GET /health` on every service returns `200` with DB and Redis status
-- [ ] At least one synchronous service-to-service call works end-to-end
-- [ ] k6 baseline test runs successfully
+- [x] `docker compose up` starts all services without errors
+- [x] `docker compose ps` shows every service as `(healthy)`
+- [x] `GET /health` on every service returns `200` with DB and Redis status
+- [x] At least one synchronous service-to-service call works end-to-end
+- [x] k6 baseline test runs successfully
 
 all of these are working
 
@@ -57,7 +57,8 @@ all of these are working
 ## What Is Not Working / Cut
 
 [Be honest. What did you not finish? What did you cut from the sprint plan and why? How will you address it in Sprint 2?]
-So far all the core servies are finished. For now some api insert their data but in future we can make queries store in the db that the api can use to interact with the database. In sprint 2 we can just call these queries instead of api having their own insert statement.
+
+So far all the core servies are finished. For now some api insert their data but in future we can make queries store in the db that the api can use to interact with the database. In sprint 2 we can just call thesequeries instead of api having their own insert statement.
 
 ---
 
@@ -116,11 +117,11 @@ INFO[0070] Requests/second: 28.562393230432942           source=console
 
 | Metric             | Value |
 | ------------------ | ----- |
-| p50 response time  |1.603 ms
-| p95 response time  |2.488 ms
-| p99 response time  |3.344 ms
-| Requests/sec (avg) |28.56 req/s
-| Error rate         |  0%
+| p50 response time  |1.603 ms|
+| p95 response time  |2.488 ms |
+| p99 response time  |3.344 ms |
+| Requests/sec (avg) |28.56 req/s |
+| Error rate         |  0% |
 
 These numbers are your baseline. Sprint 2 caching should improve them measurably.
 
@@ -129,5 +130,6 @@ These numbers are your baseline. Sprint 2 caching should improve them measurably
 ## Blockers and Lessons Learned
 
 [What slowed you down? What would you do differently? What surprised you?]
+
 The problem we faced was what schema we should decide on and how we want out system to look. It was hard but we manage to agree on one things. We should also start our project earlier and communicate ealier so one person did not design something and some one else design a different thing and then have to have things up on the last day. Next time we will start earlier and communicate better. Im surprised that we are able to make our system work and communicate well on the last few days.
 
