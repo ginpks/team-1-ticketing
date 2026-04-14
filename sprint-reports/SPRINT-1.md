@@ -26,6 +26,7 @@ For POST 3000:/pay, 3001:/purchases
 | Din | Payment Service, Ticket Request Service | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15) |
 | Gin | API service, Event-catalogue service | [pr for API service](https://github.com/ginpks/team-1-ticketing/pull/1), [pr for Event-catalogue service](https://github.com/ginpks/team-1-ticketing/pull/14) |
 | Sidharth | `POST /purchases`, Redis, purchase health check | [PR #12](https://github.com/ginpks/team-1-ticketing/pull/12) |
+| Arkar Myint | `services/payment-service/`, `services/api/` | Implemented payment service with Postgres and Redis health checks, added idempotency to payment validation, refactored payment logic to standalone service |
 
 Verify with:
 
