@@ -13,13 +13,11 @@
 #   View logs:                 docker compose logs -f
 #   Check health:              docker compose ps
 # ─────────────────────────────────────────────────────────────────────────────
-
 networks:
   team-net:
     driver: bridge
 
 services:
-
   # ── Holmes — System Investigation Container ────────────────────────────────
   # A persistent container with curl, wget, jq, k6, psql, redis-cli, Node,
   # Python, bat, lsd, fd, ripgrep, Neovim + LazyVim, and more.
@@ -48,7 +46,101 @@ services:
       - team-net
     environment:
       - TERM=xterm-256color
-    # Holmes has no ports — access it via: docker compose exec holmes bash
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - team-net
+    environment:
+      - PORT=3000
+      - SERVICE_NAME=payment-service
+      - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      purchasedb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  ticket-purchase:
+    build:
+      context: ./services/ticket-purchase
+      dockerfile: Dockerfile
+    container_name: ticket-purchase
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    networks:
+      - team-net
+    environment:
+      - PORT=3001
+      - QUEUE_NAME=ticket-purchase-queue
+      - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+      purchasedb:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  event-catalogue:
+    build:
+      context: ./services/event-catalogue
+      dockerfile: Dockerfile
+    container_name: event-catalogue
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    networks:
+      - team-net
+    environment:
+      - PORT=3003
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
+    depends_on:
+      redis:
+        condition: service_healthy
+      eventdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # ── Add your services here ─────────────────────────────────────────────────
   #
@@ -76,26 +168,69 @@ services:
   #     timeout: 5s
   #     retries: 3
   #     start_period: 15s
-  #
+  event-db:
+    build: ./db/event-catalog
+    depends_on:
+      eventdb:
+        condition: service_healthy
+    environment:
+      - EVENT_DATABASE_URL=postgres://user:pass@eventdb:5432/eventdb
+    ports:
+      - "3004:3004"
+    networks:
+      - team-net
+
+  purchase-db:
+    build: ./db/purchase
+    depends_on:
+      purchasedb:
+        condition: service_healthy
+    environment:
+      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+    ports:
+      - "3002:3002"
+    networks:
+      - team-net
+
   # ── Postgres template ──────────────────────────────────────────────────────
   #
-  # postgres:
-  #   image: postgres:16
-  #   container_name: postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: pass
-  #     POSTGRES_DB: mydb
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - team-net
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 5
+  eventdb:
+    image: postgres:16
+    container_name: eventdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: eventdb
+    volumes:
+      - eventdb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Postgres template ──────────────────────────────────────────────────────
+  #
+  purchasedb:
+    image: postgres:16
+    container_name: purchasedb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: purchasedb
+    volumes:
+      - purchasedb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -114,5 +249,6 @@ services:
 # ── Named volumes ──────────────────────────────────────────────────────────────
 # Declare a volume for each database here, e.g.:
 #
-# volumes:
-#   postgres-data:
+volumes:
+  eventdb:
+  purchasedb:

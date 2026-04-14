@@ -1,0 +1,15 @@
+{
+  "name": "team-01-event-catalogue",
+  "version": "1.0.0",
+  "description": "Event catalogue service for team 1",
+  "type": "module",
+  "main": "event-catalogue.js",
+  "scripts": {
+    "start": "node event-catalogue.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "redis": "^5.8.2",
+    "pg": "^8.13.1"
+  }
+}

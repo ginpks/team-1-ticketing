@@ -1,4 +1,4 @@
-# Sprint 1 Plan — [Team Name]
+# Sprint 1 Plan — Team 1
 
 **Sprint:** 1 — Foundation  
 **Dates:** 04.07 → 04.14  
@@ -8,17 +8,20 @@
 
 ## Goal
 
-[One or two sentences on what your team will have working by end of sprint. Be specific. "Order service, restaurant service, and synchronous call between them running in Docker Compose with health endpoints" is good. "Get stuff working" is not.]
+Initial setup of express server, routes, docker files, compose file, and db connection.
 
 ---
 
 ## Ownership
 
-| Team Member | Files / Directories Owned This Sprint           |
-| ----------- | ----------------------------------------------- |
-| Gin Park and Arkar Myint      | `[service-dir]/`, `[service-dir]/db/schema.sql` |
-| [Name]      | `[service-dir]/`, `compose.yml` additions       |
-| [Name]      | `k6/sprint-1.js`, `[worker-dir]/`               |
+| Team Member                   | Files / Directories Owned This Sprint |
+| ----------------------------- | ------------------------------------- |
+| Gin Park and Vihaan Sejwani   | `service/api/`                        |
+| Din Masic and Arkar Myint     | `service/payment/`                    |
+| Sidharth Jain and Aryan Vakil | `service/ticket-purchase/`            |
+| Mark Gallant                  | `k6/sprint-1.js`                      |
+| Tun Lin Naine                 | `db/purchaseDB`,                      |
+| Everyone                      | `compose.yml`                         |
 
 Each person must have meaningful commits in the paths they claim. Ownership is verified by:
 
@@ -30,31 +33,45 @@ git log --author="Name" --oneline -- path/to/directory/
 
 ## Tasks
 
-### [Name]
+### Gin Park and Vihaan Sejwani
 
-- [ ] Set up `[service]/` with Express + Postgres connection
-- [ ] Implement `GET /health` with DB check
-- [ ] Write `db/schema.sql` and seed script
-- [ ] Add `healthcheck` directive to `compose.yml`
+- [ ] Set up `service/api` with Express
+- [ ] Set up `service/event-catalogue` with Express
+- [ ] Set up `redis` in compose + health checkpoint
+- [ ] Implement `GET /health` for api
+- [ ] Implement `GET /health` for event-catalogue
 
-### [Name]
+### Din Masic and Arkar Myint
 
-- [ ] Set up `[service]/` with Express + Redis connection
-- [ ] Implement `GET /health` with Redis check
-- [ ] Implement `GET /[resource]` — stub returning placeholder data
-- [ ] Test synchronous call to [other service]
+- [ ] Set up `service/payment`
+- [ ] Implement `GET /health` with [Whatever this depends on]
+- [ ] Test synchronous call to [Ticket purchase]
 
-### [Name]
+### Sidharth Jain and Aryan Vakil
 
-- [ ] Wire `depends_on: condition: service_healthy` in `compose.yml`
+- [ ] Set up `service/ticket-purchase`
+- [ ] Implement `GET /health` with [Whatever this depends on]
+- [ ] Test synchronous call to [Payment Service]
+
+### Mark Gallant
+
 - [ ] Write `k6/sprint-1.js` baseline load test
+
+### Tun Lin Naine
+
+- [ ] Set up `db/purchase-db`
+- [ ] Set up `db/event-catalogue-db`
+
+### Everyone
+
 - [ ] Write `README.md` startup instructions and endpoint list
+- [ ] Add their service's compose.yml file
 
 ---
 
 ## Risks
 
-[What could go wrong? What are you uncertain about? What will you do if a task takes longer than expected?]
+Merge conflicts could arise if mutliple members share a single service implemnentation. Careful planning and a structured git workflow is imperative.
 
 ---
 
