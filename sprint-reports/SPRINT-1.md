@@ -17,22 +17,15 @@ For POST 3000:/pay, 3001:/purchases
 
 ## Individual Contributions
 
-| Team Member | What They Delivered                                     | Key Commits / PR       |
-| ----------- | ------------------------------------------------------- | ---------------------- |
-Tun Lin | purchase DB, event-catalog DB |[pr for purchase db] https://github.com/ginpks/team-1-ticketing/pull/8 ,[pr for event db] https://github.com/ginpks/team-1-ticketing/pull/14 |
-
-Aryan | /purchase/:id endpoint, setup express and redis for the purchase service, PublishPurchaseConfirm function,| [Ticket purchase service starter and status endpoint](https://github.com/ginpks/team-1-ticketing/pull/3), [Reconciliation after merge](https://github.com/ginpks/team-1-ticketing/pull/9), [Incorporate service and db](https://github.com/ginpks/team-1-ticketing/pull/10) |
-
-Vihaan | Finished GET /events, GET /events/:event_id, POST /events endpoints. Added input validation, correct http responses including error handling and logging | https://github.com/ginpks/team-1-ticketing/pull/16 |
-
-Mark | k7 baseline script | https://github.com/ginpks/team-1-ticketing/pull/17 |
-
-Din | Payment Service, Ticket Request Service | https://github.com/ginpks/team-1-ticketing/pull/15 |
-
-Gin | API service, Event-catalogue service |[pr for API service] https://github.com/ginpks/team-1-ticketing/pull/1 ,[pr for Event-catalogue service] https://github.com/ginpks/team-1-ticketing/pull/14 | 
-
-Sidharth | POST /purchases, redis, purchase health check | https://github.com/ginpks/team-1-ticketing/pull/12 |
-
+| Team Member | What They Delivered | Key Commits / PR |
+|---|---|---|
+| Tun Lin | purchase DB, event-catalog DB | [pr for purchase db](https://github.com/ginpks/team-1-ticketing/pull/8), [pr for event db](https://github.com/ginpks/team-1-ticketing/pull/14) |
+| Aryan | `/purchase/:id` endpoint, setup express and redis for the purchase service, `PublishPurchaseConfirm` function | [Ticket purchase service starter and status endpoint](https://github.com/ginpks/team-1-ticketing/pull/3), [Reconciliation after merge](https://github.com/ginpks/team-1-ticketing/pull/9), [Incorporate service and db](https://github.com/ginpks/team-1-ticketing/pull/10) |
+| Vihaan | Finished `GET /events`, `GET /events/:event_id`, `POST /events` endpoints. Added input validation, correct HTTP responses including error handling and logging | [PR #16](https://github.com/ginpks/team-1-ticketing/pull/16) |
+| Mark | k6 baseline script | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17) |
+| Din | Payment Service, Ticket Request Service | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15) |
+| Gin | API service, Event-catalogue service | [pr for API service](https://github.com/ginpks/team-1-ticketing/pull/1), [pr for Event-catalogue service](https://github.com/ginpks/team-1-ticketing/pull/14) |
+| Sidharth | `POST /purchases`, Redis, purchase health check | [PR #12](https://github.com/ginpks/team-1-ticketing/pull/12) |
 
 Verify with:
 
