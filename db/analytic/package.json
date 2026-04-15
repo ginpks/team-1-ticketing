@@ -1,0 +1,16 @@
+{
+  "name": "analytic-db",
+  "version": "1.0.0",
+  "description": "the database for analytic service",
+  "license": "ISC",
+  "author": "Tun Lin",
+  "type": "module",
+  "main": "init.js",
+  "scripts": {
+    "start": "node init.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0"
+  }
+}
