@@ -110,48 +110,28 @@ app.post('/purchases', async (req, res) => {
       })
     }
  
-    // ── Call Payment Service synchronously ───────────────────────────────────
-    let paymentStatus = 'failed'
-    let transactionRef = null
-    try {
-      const paymentResponse = await fetch(`${PAYMENT_SERVICE_URL}/pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount })
-      })
-      const paymentData = await paymentResponse.json()
-      if (paymentResponse.ok && paymentData.status === 'success') {
-        paymentStatus = 'success'
-        transactionRef = paymentData.transaction_ref || null
-      }
-    } catch (paymentErr) {
-      console.error('Payment service unreachable:', paymentErr.message)
-    }
- 
-    const finalStatus = paymentStatus === 'success' ? 'confirmed' : 'failed'
- 
-    // ── Store everything in a single DB transaction ───────────────────────────
+    // ── Store everything as pending in one DB transaction ────────────────────
     const dbClient = await pool.connect()
     let purchaseId
     try {
       await dbClient.query('BEGIN')
- 
+
       const purchaseData = await dbClient.query(
         `INSERT INTO purchases (amount, status, idempotency_key) VALUES ($1, $2, $3) RETURNING id`,
-        [amount, finalStatus, idempotency_key]
+        [amount, 'pending', idempotency_key]
       )
       purchaseId = purchaseData.rows[0].id
- 
+
       await dbClient.query(
         `INSERT INTO reservations (purchase_id, event, seat, start_time, end_time) VALUES ($1, $2, $3, $4, $5)`,
         [purchaseId, event, seat, start_time, end_time]
       )
- 
+
       await dbClient.query(
         `INSERT INTO payments (purchase_id, status, amount, transaction_ref) VALUES ($1, $2, $3, $4)`,
-        [purchaseId, paymentStatus, amount, transactionRef]
+        [purchaseId, 'pending', amount, null]
       )
- 
+
       await dbClient.query('COMMIT')
     } catch (err) {
       await dbClient.query('ROLLBACK')
@@ -159,36 +139,27 @@ app.post('/purchases', async (req, res) => {
     } finally {
       dbClient.release()
     }
- 
-    // ── Publish to Redis or push to waitlist ─────────────────────────────────
-    if (finalStatus === 'confirmed') {
-      await publishPurchaseConfirmed({
-        purchase_id: purchaseId,
-        event,
-        seat,
-        amount,
-        idempotency_key,
-        confirmed_at: new Date().toISOString()
-      })
-    } else {
-      await client.lPush('waitlist-queue', JSON.stringify({
-        event,
-        seat,
-        released_at: new Date().toISOString()
-      }))
-    }
- 
-    return res.status(201).json({
+
+    // ── Push job to Redis queue (async — don't wait for payment) ─────────────
+    await client.lPush(queueName, JSON.stringify({
+      purchaseId,
+      amount,
+      event,
+      seat,
+      idempotency_key
+    }))
+    console.log(`Queued payment job for purchaseId ${purchaseId}`)
+
+    // ── Return immediately with pending status ────────────────────────────────
+    return res.status(202).json({
       duplicate: false,
       purchase: {
         id: purchaseId,
-        status: finalStatus,
+        status: 'pending',
         amount,
         idempotency_key,
         event,
-        seat,
-        payment_status: paymentStatus,
-        transaction_ref: transactionRef
+        seat
       }
     })
  
