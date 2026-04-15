@@ -245,6 +245,24 @@ services:
   #     interval: 5s
   #     timeout: 3s
   #     retries: 5
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    networks:
+      - team-net
+    environment:
+      - PORT=3005
+      - SERVICE_NAME=notification-service
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # ── Named volumes ──────────────────────────────────────────────────────────────
 # Declare a volume for each database here, e.g.:
