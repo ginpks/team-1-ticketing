@@ -191,6 +191,16 @@ services:
       - "3002:3002"
     networks:
       - team-net
+  
+  analytic-db:
+    build: ./db/analytic
+    depends_on:
+      analyticdb:
+        condition: service_healthy
+    environment:
+      - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
+    networks:
+      - team-net
 
   # ── Postgres template ──────────────────────────────────────────────────────
   #
@@ -212,8 +222,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Postgres template ──────────────────────────────────────────────────────
-  #
   purchasedb:
     image: postgres:16
     container_name: purchasedb
@@ -228,6 +236,24 @@ services:
       - team-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  analyticdb:
+    image: postgres:16
+    container_name: analyticdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: analyticdb
+    volumes:
+      - analyticdb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d analyticdb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -270,3 +296,4 @@ services:
 volumes:
   eventdb:
   purchasedb:
+  analyticdb:

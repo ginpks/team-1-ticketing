@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS analytics (
+  id SERIAL PRIMARY KEY,
+  event TEXT NOT NULL,
+  tickets_sold INT NOT NULL DEFAULT 0,
+  peak_hour TIMESTAMP NOT NULL,
+  browsed_count INT DEFAULT 0,
+  revenue DECIMAL(10,2) NOT NULL DEFAULT 0
+);
