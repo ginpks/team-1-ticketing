@@ -88,7 +88,7 @@ async function processJob(job) {
     } else {
       const updatedJob = { ...job, attempts: newAttempts}
       console.warn(`Payment failed for purchaseId ${purchaseId}, retrying (attempt ${newAttempts}/${maxRetries})`)
-      await new Promise(r => setTimeout(r, 500))
+      await new Promise(r => setTimeout(r, 500 * 2 ** newAttempts))
       await queueClient.rPush(queueName, JSON.stringify(updatedJob))
     }
   } catch (err) {
