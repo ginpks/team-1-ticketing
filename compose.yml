@@ -114,8 +114,7 @@ services:
       - team-net
     environment:
       - QUEUE_NAME=ticket-purchase-queue
-      - DLQ_NAME=ticket-purchase-dlq
-      - MAX_RETRIES=3
+      - WAITLIST_QUEUE=waitlist-queue
       - HEALTH_PORT=4000
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379

@@ -11,8 +11,7 @@ const { Pool } = pkg
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3000'
 const queueName = process.env.QUEUE_NAME || 'ticket-purchase-queue'
-const maxRetries = parseInt(process.env.MAX_RETRIES) || 3
-const dlqName = process.env.DLQ_NAME || 'ticket-purchase-dlq'
+const waitlistQueue = process.env.WAITLIST_QUEUE || 'waitlist-queue'
 const app = express()
 const healthPort = process.env.HEALTH_PORT || 4000
 let lastSuccessAt = null 
@@ -32,14 +31,14 @@ const withTimeout = (promise, ms = 500) => {
 // ── Health check endpoint ───────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   try {
-    const [ queueDepth, dlqDepth ] = await Promise.all([
+    const [ tpQueueDepth, waitlistQueueDepth ] = await Promise.all([
       withTimeout(healthClient.lLen(queueName)),
-      withTimeout(healthClient.lLen(dlqName))
+      withTimeout(healthClient.lLen(waitlistQueue))
     ])
     res.json({
       status: 'ok',
-      queueDepth,
-      dlqDepth,
+      tpQueueDepth,
+      waitlistQueueDepth,
       lastSuccessAt,
       timestamp: new Date().toISOString()
     })
@@ -52,7 +51,6 @@ app.get('/health', async (req, res) => {
  
 // ── Process a single payment job ──────────────────────────────────────────────
 async function processJob(job) {
-  const attempts = job.attempts || 0
   const { purchaseId, amount, event, seat, idempotency_key } = job
  
   console.log(`Processing payment job for purchaseId ${purchaseId}`)
@@ -111,16 +109,9 @@ async function processJob(job) {
       lastSuccessAt = new Date().toISOString()
       console.log(`Published confirmation for purchaseId ${purchaseId}`)
       return
-    }
-    const newAttempts = attempts + 1
-    if (newAttempts >= maxRetries) {
-      await queueClient.rPush(dlqName, JSON.stringify({ ...job, attempts: newAttempts, failed_at: new Date().toISOString(), error: 'Max retries reached' }))
-      console.warn(`Moved purchaseId ${purchaseId} to DLQ after ${newAttempts} attempts`)
     } else {
-      const updatedJob = { ...job, attempts: newAttempts}
-      console.warn(`Payment failed for purchaseId ${purchaseId}, retrying (attempt ${newAttempts}/${maxRetries})`)
-      await new Promise(r => setTimeout(r, 500 * 2 ** newAttempts))
-      await queueClient.rPush(queueName, JSON.stringify(updatedJob))
+      console.warn(`Payment failed for purchaseId ${purchaseId}, adding it to the ${waitlistQueue}`)
+      await queueClient.rPush(waitlistQueue, JSON.stringify(job))
     }
   } catch (err) {
     console.error(`Pub/sub failed for purchaseId ${purchaseId}:`, err.message)
