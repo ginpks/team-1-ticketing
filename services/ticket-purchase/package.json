@@ -5,7 +5,7 @@
   "type": "module",
   "main": "ticket-purchase.js",
   "scripts": {
-    "start": "node ticket-purchase.js & node ticket-worker.js"
+    "start": "node ticket-purchase.js"
   },
   "dependencies": {
     "express": "^5.2.1",

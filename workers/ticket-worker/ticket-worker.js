@@ -5,6 +5,7 @@
  
 import redis from 'redis'
 import pkg from 'pg'
+import express from 'express'
  
 const { Pool } = pkg
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
@@ -12,13 +13,42 @@ const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-s
 const queueName = process.env.QUEUE_NAME || 'ticket-purchase-queue'
 const maxRetries = parseInt(process.env.MAX_RETRIES) || 3
 const dlqName = process.env.DLQ_NAME || 'ticket-purchase-dlq'
+const app = express()
+const healthPort = process.env.HEALTH_PORT || 4000
 let lastSuccessAt = null 
 // ── Two Redis clients — one for queue, one for pub/sub ────────────────────────
 const queueClient = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
 const pubClient   = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
+const healthClient = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
  
 queueClient.on('error', err => console.error('Worker Redis error:', err.message))
 pubClient.on('error',   err => console.error('Worker pub Redis error:', err.message))
+healthClient.on('error', err => console.error('Worker health Redis error:', err.message))
+
+const withTimeout = (promise, ms = 500) => {
+  return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))])
+}
+
+// ── Health check endpoint ───────────────────────────────────────────────────
+app.get('/health', async (req, res) => {
+  try {
+    const [ queueDepth, dlqDepth ] = await Promise.all([
+      withTimeout(healthClient.lLen(queueName)),
+      withTimeout(healthClient.lLen(dlqName))
+    ])
+    res.json({
+      status: 'ok',
+      queueDepth,
+      dlqDepth,
+      lastSuccessAt,
+      timestamp: new Date().toISOString()
+    })
+  } catch (err) {
+    console.error('Health check error:', err.message)
+    res.status(500).json({ status: 'error', message: 'Health check failed' })
+  }
+})
+
  
 // ── Process a single payment job ──────────────────────────────────────────────
 async function processJob(job) {
@@ -78,6 +108,7 @@ async function processJob(job) {
         transaction_ref: transactionRef,
         confirmed_at: new Date().toISOString()
       }))
+      lastSuccessAt = new Date().toISOString()
       console.log(`Published confirmation for purchaseId ${purchaseId}`)
       return
     }
@@ -104,7 +135,13 @@ async function startWorker() {
  
     await queueClient.connect()
     await pubClient.connect()
+    await healthClient.connect()
+    console.log('Worker connected to Redis')
     console.log(`Worker listening on queue: ${queueName}`)
+
+    app.listen(healthPort, () => {
+      console.log(`Health check endpoint running on port ${healthPort}`)
+    })
  
     // brPop blocks until a job is available — timeout 0 = wait forever
     while (true) {
