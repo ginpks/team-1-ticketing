@@ -16,7 +16,7 @@ const dlqName = process.env.DLQ_NAME || 'ticket-purchase-dlq'
 const app = express()
 const healthPort = process.env.HEALTH_PORT || 4000
 let lastSuccessAt = null 
-// ── Two Redis clients — one for queue, one for pub/sub ────────────────────────
+// ── Three Redis clients — one for queue, one for pub/sub, one for health ────────────────────────
 const queueClient = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
 const pubClient   = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
 const healthClient = redis.createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' })
