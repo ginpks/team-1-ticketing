@@ -115,7 +115,9 @@ services:
     environment:
       - QUEUE_NAME=ticket-purchase-queue
       - WAITLIST_QUEUE=waitlist-queue
+      - DLQ_NAME=ticket-purchase-dlq
       - HEALTH_PORT=4000
+      - HEALTH_TIMEOUT_MS=500
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
       - PAYMENT_SERVICE_URL=http://payment-service:3000
