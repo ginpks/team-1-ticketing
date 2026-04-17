@@ -16,6 +16,8 @@ let lastProcessedAt = null
 let lastError = null
 let processedCount = 0
 
+// Keep startup self-contained so the worker can run against a fresh analytics DB
+// or an older local volume that was created before the unique event constraint.
 const ensureAnalyticsTable = async () => {
   await pool.query(
     `CREATE TABLE IF NOT EXISTS analytics (
@@ -89,6 +91,9 @@ healthRedis.on('error', err => {
   console.error('Analytics health Redis error:', err.message)
 })
 
+// Apply one confirmed purchase to analytics. The processed_purchase_confirmations
+// insert is the idempotency guard: if the same purchase_id arrives twice, the
+// second message commits without touching tickets_sold or revenue.
 const recordPurchaseConfirmed = async (purchase) => {
   const confirmedAt = purchase.confirmed_at ? new Date(purchase.confirmed_at) : new Date()
   const amount = Number(purchase.amount)
@@ -127,6 +132,8 @@ const recordPurchaseConfirmed = async (purchase) => {
       return false
     }
 
+    // Create the event's analytics row on the first purchase, then increment the
+    // aggregate counters for each later confirmed purchase for the same event.
     await client.query(
       `INSERT INTO analytics (event, tickets_sold, peak_hour, revenue)
        VALUES ($1, 1, date_trunc('hour', $2::timestamp), $3)
@@ -148,6 +155,8 @@ const recordPurchaseConfirmed = async (purchase) => {
   }
 }
 
+// Redis pub/sub delivers message bodies as strings, so this handler parses the
+// purchase confirmation and delegates the transactional DB update above.
 const handlePurchaseConfirmed = async (message) => {
   let purchase
 
@@ -208,6 +217,8 @@ app.get('/health', async (_req, res) => {
   })
 })
 
+// Boot sequence: prepare tables, connect Redis clients, subscribe to the purchase
+// confirmation channel, then expose a health endpoint for Compose.
 const startWorker = async () => {
   try {
     await ensureAnalyticsTable()
