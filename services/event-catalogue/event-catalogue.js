@@ -114,7 +114,7 @@ app.get("/events/:event_id", async (req, res) => {
     const seats = await pool.query("SELECT * FROM seats WHERE event_id = $1", [
       event_id,
     ]);
-    responseObject = { event: event.rows[0], seats: seats.rows };
+    const responseObject = { event: event.rows[0], seats: seats.rows };
     await client.setEx(
       `events:${event_id}`,
       60,
