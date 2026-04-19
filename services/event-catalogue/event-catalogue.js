@@ -75,6 +75,11 @@ app.get("/health", async (_req, res) => {
 // ------------- GET events -------------
 app.get("/events", async (_req, res) => {
   try {
+    const cached = await client.get("events:all");
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
+
     const result = await pool.query("SELECT * FROM events");
 
     await client.setEx("events:all", 60, JSON.stringify(result.rows));
