@@ -75,7 +75,15 @@ app.get("/health", async (_req, res) => {
 // ------------- GET events -------------
 app.get("/events", async (_req, res) => {
   try {
+    const cached = await client.get("events:all");
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
+
     const result = await pool.query("SELECT * FROM events");
+
+    await client.setEx("events:all", 60, JSON.stringify(result.rows));
+
     // Did not put a check for empty array, that is not an error.
     return res.status(200).json(result.rows);
   } catch (err) {
@@ -93,6 +101,10 @@ app.get("/events/:event_id", async (req, res) => {
   }
 
   try {
+    const cached = await client.get(`events:${event_id}`);
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
     const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
       event_id,
     ]);
@@ -102,7 +114,13 @@ app.get("/events/:event_id", async (req, res) => {
     const seats = await pool.query("SELECT * FROM seats WHERE event_id = $1", [
       event_id,
     ]);
-    res.status(200).json({ event: event.rows[0], seats: seats.rows });
+    const responseObject = { event: event.rows[0], seats: seats.rows };
+    await client.setEx(
+      `events:${event_id}`,
+      60,
+      JSON.stringify(responseObject),
+    );
+    res.status(200).json(responseObject);
   } catch (err) {
     console.error("Error fetching event:", err.message);
     res.status(500).json({ error: "Failed to fetch event" });
@@ -130,6 +148,7 @@ app.post("/events", async (req, res) => {
     const event = eventResult.rows[0];
 
     await dbClient.query("COMMIT");
+    await client.del("events:all");
     return res.status(201).json(event);
   } catch (err) {
     await dbClient.query("ROLLBACK");
