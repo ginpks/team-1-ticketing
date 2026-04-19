@@ -148,6 +148,7 @@ app.post("/events", async (req, res) => {
     const event = eventResult.rows[0];
 
     await dbClient.query("COMMIT");
+    await client.del("events:all");
     return res.status(201).json(event);
   } catch (err) {
     await dbClient.query("ROLLBACK");
