@@ -110,7 +110,13 @@ app.get("/events/:event_id", async (req, res) => {
     const seats = await pool.query("SELECT * FROM seats WHERE event_id = $1", [
       event_id,
     ]);
-    res.status(200).json({ event: event.rows[0], seats: seats.rows });
+    responseObject = { event: event.rows[0], seats: seats.rows };
+    await client.setEx(
+      `events:${event_id}`,
+      60,
+      JSON.stringify(responseObject),
+    );
+    res.status(200).json(responseObject);
   } catch (err) {
     console.error("Error fetching event:", err.message);
     res.status(500).json({ error: "Failed to fetch event" });
