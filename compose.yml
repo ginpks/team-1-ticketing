@@ -175,6 +175,30 @@ services:
       timeout: 3s
       retries: 5
 
+  notification-worker:
+    build:
+      context: ./services/notification-worker
+      dockerfile: Dockerfile
+    container_name: notification-worker
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    networks:
+      - team-net
+    environment:
+      - PORT=3006
+      - REDIS_URL=redis://redis:6379
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3005
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # ── Add your services here ─────────────────────────────────────────────────
   #
   # Pattern for each service:
