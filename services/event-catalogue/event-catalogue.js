@@ -101,6 +101,10 @@ app.get("/events/:event_id", async (req, res) => {
   }
 
   try {
+    const cached = await client.get(`events:${event_id}`);
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
     const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
       event_id,
     ]);
