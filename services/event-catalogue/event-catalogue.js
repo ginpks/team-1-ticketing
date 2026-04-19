@@ -76,6 +76,9 @@ app.get("/health", async (_req, res) => {
 app.get("/events", async (_req, res) => {
   try {
     const result = await pool.query("SELECT * FROM events");
+
+    await client.setEx("events:all", 60, JSON.stringify(result.rows));
+
     // Did not put a check for empty array, that is not an error.
     return res.status(200).json(result.rows);
   } catch (err) {
