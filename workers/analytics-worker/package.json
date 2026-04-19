@@ -1,0 +1,15 @@
+{
+  "name": "team-01-analytics-worker",
+  "version": "1.0.0",
+  "description": "Analytics worker for Team 1 ticketing",
+  "type": "module",
+  "main": "analytics-worker.js",
+  "scripts": {
+    "start": "node analytics-worker.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.13.1",
+    "redis": "^5.8.2"
+  }
+}
