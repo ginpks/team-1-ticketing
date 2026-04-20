@@ -18,6 +18,7 @@
 | -------------- | ------------------------------------- |
 | Arkar Myint    | `services/notification-service/`      |
 | Vihaan Sejwani | `services/event-catalog/`             |
+| Aryan Vakil    | `workers/ticket-worker/`              |
 | [Name]         | `[path]`                              |
 
 ---
@@ -36,6 +37,10 @@
 - [x] Implement caching in `event-catalog` service, `GET/events`
 - [x] Implement caching in `event-catalog` service, `GET/events:event_id`
 - [x] Implement deleting cache in `event-catalog` service, `POST/events` to avoid serving stale data
+
+### Aryan Vakil
+- [x] Add `GET \health` for ticket purchase worker
+- [x] Integrate dlq for ticket purchase worker
 
 ### [Name]
 

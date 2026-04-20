@@ -12,6 +12,11 @@
 
 - Implemented part one of Analytics worker that subscribes to purchase events published by the ticket-purchase worker and stores related data in the analytic DB.
 
+- Implemented a Dead Letter Queue (DLQ) for the ticket purchase worker, which stores jobs that cannot be processed due to issues like invalid payloads, database failures, pub/sub failures, or unexpected runtime errors, ensuring no jobs are silently lost.
+
+- Added a health endpoint for the ticket purchase worker that reports system status, including queue depths (main queue and DLQ) and the timestamp of the last successfully processed job, enabling monitoring and quick detection of failures or backlogs.
+
+
 ---
 
 ## Individual Contributions
@@ -19,7 +24,7 @@
 | Team Member    | What They Delivered                                                                                                                                                                                                                                                     | Key Commits / PR                                                                                                                                                                                                                                                            |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tun Lin        |                                                                                                                                                                                                                                                                         | [pr for purchase db](https://github.com/ginpks/team-1-ticketing/pull/8), [pr for event db](https://github.com/ginpks/team-1-ticketing/pull/14)                                                                                                                              |
-| Aryan          | `/purchase/:id` endpoint, setup express and redis for the purchase service, `PublishPurchaseConfirm` function                                                                                                                                                           | [Ticket purchase service starter and status endpoint](https://github.com/ginpks/team-1-ticketing/pull/3), [Reconciliation after merge](https://github.com/ginpks/team-1-ticketing/pull/9), [Incorporate service and db](https://github.com/ginpks/team-1-ticketing/pull/10) |
+| Aryan          | Added `GET \health` endpoint for ticket purchase worker, moved ticket purchase worker to the workers folder and created/updated related Dockerfile and package.json | [PR #22](https://github.com/ginpks/team-1-ticketing/pull/22) |
 | Vihaan Sejwani | Added caching to Event Catalog service, the cache interacts with `GET /events`, `GET /events/:event_id`, `POST /events` endpoints. Created Architecture diagram.                                                                                                        | [PR #25](https://github.com/ginpks/team-1-ticketing/pull/25)                                                                                                                                                                                                                |
 | Mark           | k6 baseline script                                                                                                                                                                                                                                                      | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Payment Service, Ticket Request Service                                                                                                                                                                                                                                 | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15)                                                                                                                                                                                                                |
@@ -35,7 +40,7 @@
 - [ ] Async pipeline works end-to-end (message published → worker consumes → action taken)
 - [ ] At least one write path is idempotent (same request twice produces same result)
 - [ ] Worker logs show pipeline activity in `docker compose logs`
-- [ ] Worker `GET /health` returns queue depth, DLQ depth, and last-job-at
+- [x] Worker `GET /health` returns queue depth, DLQ depth, and last-job-at
 
 ---
 
