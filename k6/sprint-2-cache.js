@@ -2,7 +2,7 @@
 //
 // Run from inside the holmes container:
 //   docker compose exec holmes bash
-//   k6 run /workspace/k6/sprint-1.js
+//   k6 run /workspace/k6/sprint-2-cache.js
 //
 // Or from your host machine if k6 is installed:
 //   k6 run k6/sprint-2-cache.js
