@@ -46,12 +46,12 @@ export const options = {
       executor:            "ramping-arrival-rate",
       startRate:           0,
       timeUnit:            "1s",
-      preAllocatedVUs:     60,
-      maxVUs:              60,
+      preAllocatedVUs:     250,
+      maxVUs:              250,
       stages: [
-        { duration: "1s",  target: 50 },  // ramp to 50 req/s
-        { duration: "4s",  target: 50 },  // hold - delivers ~250 requests total
-        { duration: "1s",  target: 0  },  // ramp down
+        { duration: "2s",  target: 200 },  // ramp to 50 req/s
+        { duration: "6s",  target: 200 },  // hold - delivers ~250 requests total
+        { duration: "2s",  target: 0  },  // ramp down
       ],
       startTime:   "0s",
       exec:        "burstScenario",
@@ -60,7 +60,7 @@ export const options = {
     queue_monitor: {
       executor:    "constant-vus",
       vus:         1,
-      duration:    "20s",   // covers burst (~6 s) + full drain window
+      duration:    "30s",   // covers burst (~6 s) + full drain window
       startTime:   "0s",
       exec:        "monitorScenario",
     },
