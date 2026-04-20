@@ -14,25 +14,28 @@
 
 ## Ownership
 
-| Team Member | Files / Directories Owned This Sprint |
-| ----------- | ------------------------------------- |
-| Arkar Myint | `services/notification-service/` |
-| [Name]      | `[path]` |
-| [Name]      | `[path]` |
+| Team Member    | Files / Directories Owned This Sprint |
+| -------------- | ------------------------------------- |
+| Arkar Myint    | `services/notification-service/`      |
+| Vihaan Sejwani | `services/event-catalog/`             |
+| [Name]         | `[path]`                              |
 
 ---
 
 ## Tasks
 
 ### Arkar Myint
+
 - [x] Build `notification-service` with `POST /notify` endpoint
 - [x] Implement `GET /health` endpoint
 - [x] Add service to `compose.yml` with healthcheck on port 3005
 - [x] Move service into `services/` directory
 
-### [Name]
+### Vihaan Sejwani
 
-- [ ] ...
+- [x] Implement caching in `event-catalog` service, `GET/events`
+- [x] Implement caching in `event-catalog` service, `GET/events:event_id`
+- [x] Implement deleting cache in `event-catalog` service, `POST/events` to avoid serving stale data
 
 ### [Name]
 
