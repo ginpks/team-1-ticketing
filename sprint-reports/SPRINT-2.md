@@ -31,7 +31,7 @@
 
 ## What Is Working
 
-- [ ] Redis cache in use — repeated reads do not hit the database
+- [x] Redis cache in use — repeated reads do not hit the database
 - [ ] Async pipeline works end-to-end (message published → worker consumes → action taken)
 - [ ] At least one write path is idempotent (same request twice produces same result)
 - [ ] Worker logs show pipeline activity in `docker compose logs`
