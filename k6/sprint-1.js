@@ -44,7 +44,7 @@ export default function () {
 
 
   errorRate.add(!ok);
-  sleep(0.5);
+  //sleep(0.5);
 }
 
 export function handleSummary(data) {
