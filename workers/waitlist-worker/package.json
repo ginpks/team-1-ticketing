@@ -1,0 +1,12 @@
+{
+  "name": "waitlist-worker",
+  "version": "1.0.0",
+  "description": "worker for the wailist",
+  "license": "ISC",
+  "author": "Tun Lin",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node worker.js"
+  }
+}
