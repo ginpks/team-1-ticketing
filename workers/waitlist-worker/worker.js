@@ -1,7 +1,15 @@
 import { createClient } from "redis";
-import { purchasePool } from "../../db/purchase/purchase.js";
+import { Pool } from "pg";
 
-const client = createClient();
+const url = process.env.PURCHASE_DATABASE_URL;
+
+export const purchasePool = new Pool({
+  connectionString: url,
+});
+
+const client = createClient({
+  url: process.env.REDIS_URL || "redis://redis:6379",
+});
 await client.connect();
 
 const WAITLIST_QUEUE = "waitlist-queue";

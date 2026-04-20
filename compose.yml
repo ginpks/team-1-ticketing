@@ -108,7 +108,7 @@ services:
     build:
       context: ./workers/ticket-worker
       dockerfile: Dockerfile
-    container_name: waitlist-worker
+    container_name: ticket-worker
     restart: unless-stopped
     networks:
       - team-net
@@ -141,7 +141,7 @@ services:
     build:
       context: ./workers/waitlist-worker
       dockerfile: Dockerfile
-    container_name: ticket-worker
+    container_name: waitlist-worker
     restart: unless-stopped
     networks:
       - team-net
@@ -150,6 +150,10 @@ services:
         condition: service_healthy
       purchasedb:
         condition: service_healthy
+    environment:
+      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+
 
   event-catalogue:
     build:
