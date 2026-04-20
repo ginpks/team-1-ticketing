@@ -14,13 +14,11 @@
 
 ## Individual Contributions
 
-| Team Member | What They Delivered | Key Commits |
-| ----------- | ------------------- | ----------- |
-| [Name]      | | |
-| [Name]      | | |
-| [Name]      | | |
-
----
+| Team Member    | What They Delivered                                                                  | Key Commits                                        |
+| -------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| Vihaan Sejwani | Implemented the Redis cache for Events Catalog service, created architecture diagram | https://github.com/ginpks/team-1-ticketing/pull/25 |
+| [Name]         |                                                                                      |                                                    |
+| [Name]         |                                                                                      |                                                    |
 
 ## What Is Working
 
@@ -42,10 +40,10 @@
 
 | Metric | Sprint 1 Baseline | Sprint 2 Cached | Change |
 | ------ | ----------------- | --------------- | ------ |
-| p50    | | | |
-| p95    | | | |
-| p99    | | | |
-| RPS    | | | |
+| p50    |                   |                 |        |
+| p95    |                   |                 |        |
+| p99    |                   |                 |        |
+| RPS    |                   |                 |        |
 
 [Explain the improvement. If the numbers did not improve, explain why and what you did to diagnose it.]
 
