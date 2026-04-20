@@ -25,7 +25,7 @@
 | Din | Payment Service, Ticket Request Service | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15) |
 | Gin | Analytics worker | [PR #24](https://github.com/ginpks/team-1-ticketing/pull/24) |
 | Sidharth | `POST /purchases`, Redis, purchase health check | [PR #12](https://github.com/ginpks/team-1-ticketing/pull/12) |
-| Arkar | `POST /purchases`, Redis, purchase health check | [PR #12](https://github.com/ginpks/team-1-ticketing/pull/12) |
+| Arkar Myint | Built `notification-service` with `POST /notify` endpoint that receives purchase confirmations and logs simulated emails in structured JSON. Implemented `GET /health` endpoint. Added service to `compose.yml` on port 3005. Moved service into `services/` directory. | [PR #21](https://github.com/ginpks/team-1-ticketing/pull/21), [PR #27](https://github.com/ginpks/team-1-ticketing/pull/27) |
 
 ---
 
