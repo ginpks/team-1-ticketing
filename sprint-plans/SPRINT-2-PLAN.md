@@ -16,7 +16,7 @@
 
 | Team Member | Files / Directories Owned This Sprint |
 | ----------- | ------------------------------------- |
-| [Name]      | `[path]` |
+| Arkar Myint | `services/notification-service/` |
 | [Name]      | `[path]` |
 | [Name]      | `[path]` |
 
@@ -24,9 +24,11 @@
 
 ## Tasks
 
-### [Name]
-
-- [ ] ...
+### Arkar Myint
+- [x] Build `notification-service` with `POST /notify` endpoint
+- [x] Implement `GET /health` endpoint
+- [x] Add service to `compose.yml` with healthcheck on port 3005
+- [x] Move service into `services/` directory
 
 ### [Name]
 
