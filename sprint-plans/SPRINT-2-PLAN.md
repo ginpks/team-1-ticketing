@@ -9,6 +9,7 @@
 ## Goal
 
 [What will your team have working by end of sprint? Name the specific cache, queue, and worker you are adding.]
+Our group will change our workflow from sync to async to make the system flow faster and handle more services. We will on analytics, waitlist, notification workers. We will add a event cache.
 
 ---
 
@@ -19,7 +20,7 @@
 | Arkar Myint    | `services/notification-service/`      |
 | Vihaan Sejwani | `services/event-catalog/`             |
 | Aryan Vakil    | `workers/ticket-worker/`              |
-| [Name]         | `[path]`                              |
+| Tun Lin Naine  | `workers/waitlist-worker`             |
 
 ---
 
@@ -42,9 +43,11 @@
 - [x] Add `GET \health` for ticket purchase worker
 - [x] Integrate dlq for ticket purchase worker
 
-### [Name]
+### Tun Lin Naine
 
-- [ ] ...
+- [x] Implement a database for analytic service
+- [x] implement a waitlist worker that handle waitlist for different events
+
 
 ---
 
