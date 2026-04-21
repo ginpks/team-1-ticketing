@@ -283,7 +283,7 @@ services:
       refunddb:
         condition: service_healthy
     environment:
-      - REFUND_DATABASE_URL=postgres://user:pass@analyticdb:5432/refunddb
+      - REFUND_DATABASE_URL=postgres://user:pass@refunddb:5432/refunddb
     networks:
       - team-net
 
