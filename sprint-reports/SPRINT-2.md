@@ -2,7 +2,7 @@
 
 **Sprint:** 2 — Async Pipelines and Caching  
 **Tag:** `sprint-2`  
-**Submitted:** [date, before 04.21 class]
+**Submitted:** [04-20-2026]
 
 ---
 
