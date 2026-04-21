@@ -19,7 +19,7 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 | Team Member    | Files / Directories Owned This Sprint |
 | -------------- | ------------------------------------- |
 | Arkar Myint    | `services/notification-service/`      |
-| Vihaan Sejwani | `services/event-catalog/`             |
+| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
 | Aryan Vakil    | `workers/ticket-worker/`              |
 | Tun Lin Naine  | `workers/waitlist-worker`             |
 | Din Masic      | `services/ticket-purchase/`           |
@@ -40,9 +40,8 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 ### Vihaan Sejwani
 
-- [x] Implement caching in `event-catalog` service, `GET/events`
-- [x] Implement caching in `event-catalog` service, `GET/events:event_id`
-- [x] Implement deleting cache in `event-catalog` service, `POST/events` to avoid serving stale data
+- [x] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
+- [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
 
 ### Aryan Vakil
 - [x] Add `GET \health` for ticket purchase worker
