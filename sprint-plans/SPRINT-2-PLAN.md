@@ -1,5 +1,4 @@
-# Sprint 2 Plan — [Team Name]
-
+# Sprint 2 Plan — Team 1
 **Sprint:** 2 — Async Pipelines and Caching  
 **Dates:** 04.14 → 04.21  
 **Written:** 04.14 in class
@@ -22,6 +21,10 @@ Our group will change our workflow from sync to async to make the system flow fa
 | Aryan Vakil    | `workers/ticket-worker/`              |
 | Tun Lin Naine  | `workers/waitlist-worker`             |
 | Din Masic      | `services/ticket-purchase/`           |
+| Gin Park       | `workers/analytics-worker/`           |
+| Mark Gallant   | `k6/`           |
+| Sidharth Jain      | `services/notification-worker`           |
+
 
 ---
 
@@ -58,11 +61,21 @@ Our group will change our workflow from sync to async to make the system flow fa
 
 - [x] Implement analytics worker that subscribes to puchase events and stores related data in analytics db
 - [x] Add `GET \health` for analytics worker
+      
+### Sidharth Jain
 
+- [x] Build the Notification Worker that subscribes to purchases:confirmed pub/sub
+- [x] Call the Notification Service via POST /notify on each confirmed purchase
+- [x] Add `/health` for notification worker
+
+### Mark Gallant
+
+- [x] Modify k6 script from sprint-1 to better stress the system and provide better analytics
+- [x] Implement async test script to hit the async pipeline and provide sprint metrics
 ---
 
 ## Risks
-
+- Merge conflicts could arise if mutliple members share a single service implemnentation. Careful planning and a structured git workflow is imperative.
 ---
 
 ## Definition of Done
