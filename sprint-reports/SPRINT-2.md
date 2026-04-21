@@ -36,9 +36,9 @@
 ## What Is Working
 
 - [x] Redis cache in use — repeated reads do not hit the database
-- [ ] Async pipeline works end-to-end (message published → worker consumes → action taken)
+- [x] Async pipeline works end-to-end (message published → worker consumes → action taken)
 - [x] At least one write path is idempotent (same request twice produces same result)
-- [ ] Worker logs show pipeline activity in `docker compose logs`
+- [x] Worker logs show pipeline activity in `docker compose logs`
 - [x] Worker `GET /health` returns queue depth, DLQ depth, and last-job-at
 - [x] Both sprint-2-cache.js and sprint-2-async.js k6 tests run succesfully and provide the desired metrics
 
