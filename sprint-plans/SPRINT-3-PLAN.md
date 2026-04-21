@@ -18,7 +18,7 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 | Team Member    | Files / Directories Owned This Sprint |
 | -------------- | ------------------------------------- |
-| Arkar Myint    | `services/notification-service/`      |
+| Arkar Myint | `services/refund-service/` |
 | Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
 | Aryan Vakil    | `workers/ticket-worker/`              |
 | Tun Lin Naine  | `workers/waitlist-worker`             |
@@ -32,11 +32,12 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 ## Tasks
 
 ### Arkar Myint
-
-- [x] Build `notification-service` with `POST /notify` endpoint
-- [x] Implement `GET /health` endpoint
-- [x] Add service to `compose.yml` with healthcheck on port 3005
-- [x] Move service into `services/` directory
+- [ ] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
+- [ ] Validate purchase exists via sync call to Ticket Purchase
+- [ ] Call Payment Service synchronously to reverse charge
+- [ ] Push to `waitlist-queue` on successful refund
+- [ ] Implement `GET /health` endpoint
+- [ ] Add to `compose.yml` with healthcheck
 
 ### Vihaan Sejwani
 
