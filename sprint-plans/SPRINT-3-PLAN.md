@@ -58,8 +58,7 @@
 
 ### Gin Park
 
-- [x] Implement analytics worker that subscribes to puchase events and stores related data in analytics db
-- [x] Add `GET \health` for analytics worker
+- [x] Implement part two of analytics worker that consumes from browse event queue and stores/updates related data in analytic db
       
 ### Sidharth Jain
 
