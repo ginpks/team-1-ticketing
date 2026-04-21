@@ -10,6 +10,8 @@
 
 [What reliability improvements and poison pill handling will your team add? Which queues get DLQ handling?]
 
+All of our queues currently have poison pill handling. Our goal is to implement/polish all remaining services and workers.
+
 ---
 
 ## Ownership
@@ -74,7 +76,7 @@
 ---
 
 ## Risks
-
+- Merge conflicts could arise if mutliple members share a single service implemnentation. Careful planning and a structured git workflow is imperative.
 ---
 
 ## Definition of Done
