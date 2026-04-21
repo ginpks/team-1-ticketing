@@ -21,6 +21,7 @@ Our group will change our workflow from sync to async to make the system flow fa
 | Vihaan Sejwani | `services/event-catalog/`             |
 | Aryan Vakil    | `workers/ticket-worker/`              |
 | Tun Lin Naine  | `workers/waitlist-worker`             |
+| Din Masic      | `services/ticket-purchase/`           |
 
 ---
 
@@ -48,6 +49,10 @@ Our group will change our workflow from sync to async to make the system flow fa
 - [x] Implement a database for analytic service
 - [x] implement a waitlist worker that handle waitlist for different events
 
+### Din Masic
+
+- [x] Made event ticket and purchase async
+- [x] Implemented worker for that said async pipeline
 
 ---
 
