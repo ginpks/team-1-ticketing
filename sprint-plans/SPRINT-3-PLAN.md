@@ -20,7 +20,7 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 | -------------- | ------------------------------------- |
 | Arkar Myint | `services/refund-service/` |
 | Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
-| Aryan Vakil    | `workers/ticket-worker/`              |
+| Aryan Vakil    | `db/refund/`              |
 | Tun Lin Naine  | `workers/waitlist-worker`             |
 | Din Masic      | `services/ticket-purchase/`           |
 | Gin Park       | `workers/analytics-worker/`           |
@@ -45,8 +45,7 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 - [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
 
 ### Aryan Vakil
-- [x] Add `GET \health` for ticket purchase worker
-- [x] Integrate dlq for ticket purchase worker
+- [ ] Create db for refund service 
 
 ### Tun Lin Naine
 
