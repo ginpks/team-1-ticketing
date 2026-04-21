@@ -84,7 +84,7 @@ come from.
 
 Running the same script on our endpoint with the redis cache gave us the
 results above with the significant improvements in all metrics. This is from
-the endpoint not needed to hit the DB for every single request, instead just
+the endpoint not needing to hit the DB for every single request, instead just
 pulling straight from the redis cache once it exists. The response time is
 basically just the network latency from the request being pulled straight
 from memory and transmitted.
@@ -107,7 +107,7 @@ with the test validating the only of the requests actually created a new
 row.
 
 ```
-INFO[0030]   Acceptance latency source=console
+INFO[0030]   Acceptance latency                         source=console
 INFO[0030]     p50  :  2.2  ms                          source=console
 INFO[0030]     p95  :  3.3  ms                          source=console
 INFO[0030]     p99  :  4.5  ms                          source=console
