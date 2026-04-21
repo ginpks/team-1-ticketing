@@ -24,7 +24,7 @@
 | Team Member | What They Delivered | Key Commits |
 | ----------- | ------------------- | ----------- |
 | Tun Lin Naine | analytic db and waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/20, https://github.com/ginpks/team-1-ticketing/pull/28|
-| [Name]      | | |
+| Arkar Myint | Built `notification-service` — `POST /notify` logs simulated confirmation emails, `GET /health` returns service status. Added to `compose.yml` on port 3005. | [PR #21](https://github.com/ginpks/team-1-ticketing/pull/21), [PR #27](https://github.com/ginpks/team-1-ticketing/pull/27) |
 | [Name]      | | |
 
 ---
