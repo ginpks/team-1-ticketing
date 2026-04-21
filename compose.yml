@@ -104,6 +104,57 @@ services:
       retries: 3
       start_period: 10s
 
+  ticket-worker:
+    build:
+      context: ./workers/ticket-worker
+      dockerfile: Dockerfile
+    container_name: ticket-worker
+    restart: unless-stopped
+    networks:
+      - team-net
+    environment:
+      - QUEUE_NAME=ticket-purchase-queue
+      - WAITLIST_QUEUE=waitlist-queue
+      - DLQ_NAME=ticket-purchase-dlq
+      - HEALTH_PORT=4000
+      - HEALTH_TIMEOUT_MS=500
+      - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      purchasedb:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  
+  waitlist-worker:
+    build:
+      context: ./workers/waitlist-worker
+      dockerfile: Dockerfile
+    container_name: waitlist-worker
+    restart: unless-stopped
+    networks:
+      - team-net
+    depends_on:
+      redis:
+        condition: service_healthy
+      purchasedb:
+        condition: service_healthy
+    environment:
+      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+
+
   event-catalogue:
     build:
       context: ./services/event-catalogue
@@ -141,6 +192,30 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  notification-worker:
+    build:
+      context: ./services/notification-worker
+      dockerfile: Dockerfile
+    container_name: notification-worker
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    networks:
+      - team-net
+    environment:
+      - PORT=3006
+      - REDIS_URL=redis://redis:6379
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3005
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # ── Add your services here ─────────────────────────────────────────────────
   #
@@ -191,6 +266,45 @@ services:
       - "3002:3002"
     networks:
       - team-net
+  
+  analytic-db:
+    build: ./db/analytic
+    depends_on:
+      analyticdb:
+        condition: service_healthy
+    environment:
+      - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
+    networks:
+      - team-net
+
+  analytics-worker:
+    build:
+      context: ./workers/analytics-worker
+      dockerfile: Dockerfile
+    container_name: analytics-worker
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    networks:
+      - team-net
+    environment:
+      - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - HEALTH_PORT=4001
+      - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      analyticdb:
+        condition: service_healthy
+      analytic-db:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # ── Postgres template ──────────────────────────────────────────────────────
   #
@@ -212,8 +326,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Postgres template ──────────────────────────────────────────────────────
-  #
   purchasedb:
     image: postgres:16
     container_name: purchasedb
@@ -231,6 +343,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  analyticdb:
+    image: postgres:16
+    container_name: analyticdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: analyticdb
+    volumes:
+      - analyticdb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d analyticdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -245,6 +375,24 @@ services:
   #     interval: 5s
   #     timeout: 3s
   #     retries: 5
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    networks:
+      - team-net
+    environment:
+      - PORT=3005
+      - SERVICE_NAME=notification-service
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # ── Named volumes ──────────────────────────────────────────────────────────────
 # Declare a volume for each database here, e.g.:
@@ -252,3 +400,4 @@ services:
 volumes:
   eventdb:
   purchasedb:
+  analyticdb:
