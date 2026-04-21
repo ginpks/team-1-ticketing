@@ -54,6 +54,11 @@ Our group will change our workflow from sync to async to make the system flow fa
 - [x] Made event ticket and purchase async
 - [x] Implemented worker for that said async pipeline
 
+### Gin Park
+
+- [x] Implement analytics worker that subscribes to puchase events and stores related data in analytics db
+- [x] Add `GET \health` for analytics worker
+
 ---
 
 ## Risks
