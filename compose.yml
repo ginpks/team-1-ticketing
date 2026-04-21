@@ -136,6 +136,24 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+  
+  waitlist-worker:
+    build:
+      context: ./workers/waitlist-worker
+      dockerfile: Dockerfile
+    container_name: waitlist-worker
+    restart: unless-stopped
+    networks:
+      - team-net
+    depends_on:
+      redis:
+        condition: service_healthy
+      purchasedb:
+        condition: service_healthy
+    environment:
+      - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
+      - REDIS_URL=redis://redis:6379
+
 
   event-catalogue:
     build:
