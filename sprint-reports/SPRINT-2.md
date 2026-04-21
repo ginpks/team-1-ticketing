@@ -152,12 +152,12 @@ and return 200 (or 202) codes.
 
 ## Blockers and Lessons Learned
 
-Mark G: I learned that I should start my work earlier as usual. I also learned
+As usual, we all learned that we should start our work earlier. We also learned
 a lot about the different ways of using k6 to test and particularly about
 using tests to simulate actual user behavior vs just slamming a system to
 stress test it. In this Sprint there were very small changes to the test
 script that gave pretty substantially different results and it was something
-I had to consider for our tests. From the last sprint I was initially doing
-something closer to user behavior simulation, whereas for this sprint I
+we had to consider for our tests. From the last sprint we were initially doing
+something closer to user behavior simulation, whereas for this sprint we
 changed to a proper stress test.
 
