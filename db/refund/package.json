@@ -1,0 +1,16 @@
+{
+  "name": "refund",
+  "version": "1.0.0",
+  "description": "database for refund API",
+  "license": "ISC",
+  "author": "Aryan",
+  "type": "module",
+  "main": "refund.js",
+  "scripts": {
+    "start": "node init.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0" 
+  }
+}

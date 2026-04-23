@@ -277,6 +277,16 @@ services:
     networks:
       - team-net
 
+  refund-db:
+    build: ./db/refund
+    depends_on:
+      refunddb:
+        condition: service_healthy
+    environment:
+      - REFUND_DATABASE_URL=postgres://user:pass@refunddb:5432/refunddb
+    networks:
+      - team-net
+
   analytics-worker:
     build:
       context: ./workers/analytics-worker
@@ -361,6 +371,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  refunddb:
+    image: postgres:16
+    container_name: refunddb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: refunddb
+    volumes:
+      - refunddb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d refunddb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -401,3 +429,4 @@ volumes:
   eventdb:
   purchasedb:
   analyticdb:
+  refunddb:
