@@ -11,7 +11,6 @@ const createTable = async () => {
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(idempotency_key)
-
 );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS reservations (
@@ -21,7 +20,7 @@ const createTable = async () => {
   seat TEXT NOT NULL,
   start_time TIMESTAMP NOT NULL,
   end_time TIMESTAMP NOT NULL,
-  UNIQUE(event, seat),
+  UNIQUE(event, seat)
 );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS payments (
