@@ -60,7 +60,7 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
       `INSERT INTO purchases (amount, status, idempotency_key)
        VALUES ($1, 'pending', $2)
        RETURNING id`,
-      [nextUser.amount ?? 0, nextUser.idempotencyKey],
+      [nextUser.amount ?? 0, nextUser.idempotency_key],
     );
 
     const purchaseId = purchaseRes.rows[0].id;
@@ -70,7 +70,7 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (event, seat) DO NOTHING
        RETURNING *`,
-      [purchaseId, event, seat, startTime, endTime]
+      [purchaseId, event, seat, startTime, endTime],
     );
 
     if (reservationRes.rowCount === 0) {
@@ -87,7 +87,7 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
         amount: nextUser.amount,
         event: event,
         seat: seat,
-        idempotency_key: nextUser.idempotencyKey,
+        idempotency_key: nextUser.idempotency_key,
       }),
     );
 
@@ -102,6 +102,8 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
         createdAt: new Date().toISOString(),
       }),
     );
+
+    console.log(`promote user ${purchaseId}`);
 
     return purchaseId;
   } catch (err) {
