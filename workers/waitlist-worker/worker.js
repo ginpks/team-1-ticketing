@@ -12,7 +12,7 @@ const client = createClient({
 });
 await client.connect();
 
-const WAITLIST_QUEUE = "waitlist-queue";
+const WAITLIST_QUEUE = "ticket-purchase-dlq";
 const DLQ = "waitlist:dlq";
 
 function validateJob(job) {
@@ -65,11 +65,18 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
 
     const purchaseId = purchaseRes.rows[0].id;
 
-    await db.query(
+    const reservationRes = await db.query(
       `INSERT INTO reservations (purchase_id, event, seat, start_time, end_time)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [purchaseId, event, seat, startTime, endTime],
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (event, seat) DO NOTHING
+       RETURNING *`,
+      [purchaseId, event, seat, startTime, endTime]
     );
+
+    if (reservationRes.rowCount === 0) {
+      await db.query("ROLLBACK");
+      return null;
+    }
 
     await db.query("COMMIT");
 
