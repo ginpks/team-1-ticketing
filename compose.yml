@@ -193,6 +193,30 @@ services:
       timeout: 3s
       retries: 5
 
+  notification-worker:
+    build:
+      context: ./services/notification-worker
+      dockerfile: Dockerfile
+    container_name: notification-worker
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    networks:
+      - team-net
+    environment:
+      - PORT=3006
+      - REDIS_URL=redis://redis:6379
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3005
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # ── Add your services here ─────────────────────────────────────────────────
   #
   # Pattern for each service:
@@ -253,6 +277,45 @@ services:
     networks:
       - team-net
 
+  refund-db:
+    build: ./db/refund
+    depends_on:
+      refunddb:
+        condition: service_healthy
+    environment:
+      - REFUND_DATABASE_URL=postgres://user:pass@refunddb:5432/refunddb
+    networks:
+      - team-net
+
+  analytics-worker:
+    build:
+      context: ./workers/analytics-worker
+      dockerfile: Dockerfile
+    container_name: analytics-worker
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    networks:
+      - team-net
+    environment:
+      - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - HEALTH_PORT=4001
+      - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      analyticdb:
+        condition: service_healthy
+      analytic-db:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # ── Postgres template ──────────────────────────────────────────────────────
   #
   eventdb:
@@ -308,6 +371,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  refunddb:
+    image: postgres:16
+    container_name: refunddb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: refunddb
+    volumes:
+      - refunddb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d refunddb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   #
   # ── Redis template ─────────────────────────────────────────────────────────
   #
@@ -324,7 +405,7 @@ services:
   #     retries: 5
   notification-service:
     build:
-      context: ./notification-service
+      context: ./services/notification-service
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -348,3 +429,4 @@ volumes:
   eventdb:
   purchasedb:
   analyticdb:
+  refunddb:
