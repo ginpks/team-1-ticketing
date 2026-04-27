@@ -298,6 +298,8 @@ services:
       - team-net
     environment:
       - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - EVENT_BROWSE_ANALYTICS_QUEUE=event-catalog:browsed
+      - EVENT_BROWSE_ANALYTICS_DLQ=event-catalog:browsed:dlq
       - HEALTH_PORT=4001
       - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
       - REDIS_URL=redis://redis:6379
