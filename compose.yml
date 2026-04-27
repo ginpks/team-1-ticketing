@@ -315,6 +315,64 @@ services:
       retries: 3
       start_period: 10s
 
+  frauddb:
+    image: postgres:16
+    container_name: frauddb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: frauddb
+    volumes:
+      - frauddb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d frauddb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+ 
+  fraud-db:
+    build: ./db/fraud
+    depends_on:
+      frauddb:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://user:pass@frauddb:5432/frauddb
+    networks:
+      - team-net
+ 
+  fraud-worker:
+    build:
+      context: ./workers/fraud-worker
+      dockerfile: Dockerfile
+    container_name: fraud-worker
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    networks:
+      - team-net
+    environment:
+      - HEALTH_PORT=4002
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://user:pass@frauddb:5432/frauddb
+      - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - DLQ_NAME=fraud-dlq
+    depends_on:
+      redis:
+        condition: service_healthy
+      frauddb:
+        condition: service_healthy
+      fraud-db:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # ── Postgres template ──────────────────────────────────────────────────────
   #
   eventdb:
@@ -461,4 +519,5 @@ volumes:
   eventdb:
   purchasedb:
   analyticdb:
+  frauddb:
   refunddb:
