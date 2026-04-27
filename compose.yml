@@ -68,7 +68,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -98,7 +98,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3001/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -131,12 +131,12 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4000/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
-  
+
   waitlist-worker:
     build:
       context: ./workers/waitlist-worker
@@ -153,7 +153,6 @@ services:
     environment:
       - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
-
 
   event-catalogue:
     build:
@@ -175,7 +174,7 @@ services:
       eventdb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3003/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -188,7 +187,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -211,7 +210,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3006/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -266,7 +265,7 @@ services:
       - "3002:3002"
     networks:
       - team-net
-  
+
   analytic-db:
     build: ./db/analytic
     depends_on:
@@ -274,6 +273,16 @@ services:
         condition: service_healthy
     environment:
       - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
+    networks:
+      - team-net
+
+  refund-db:
+    build: ./db/refund
+    depends_on:
+      refunddb:
+        condition: service_healthy
+    environment:
+      - REFUND_DATABASE_URL=postgres://user:pass@refunddb:5432/refunddb
     networks:
       - team-net
 
@@ -300,7 +309,7 @@ services:
       analytic-db:
         condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4001/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4001/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -379,7 +388,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d eventdb" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -397,7 +406,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d purchasedb" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -415,7 +424,25 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d analyticdb"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d analyticdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  refunddb:
+    image: postgres:16
+    container_name: refunddb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: refunddb
+    volumes:
+      - refunddb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d refunddb" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -446,7 +473,40 @@ services:
       - PORT=3005
       - SERVICE_NAME=notification-service
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3005/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  refund-service:
+    build:
+      context: ./services/refund-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3007:3007"
+    networks:
+      - team-net
+    environment:
+      - PORT=3007
+      - SERVICE_NAME=refund-service
+      - REFUND_DATABASE_URL=postgres://user:pass@refunddb:5432/refunddb
+      - REDIS_URL=redis://redis:6379
+      - TICKET_PURCHASE_URL=http://ticket-purchase:3001
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
+      - WAITLIST_QUEUE=waitlist-queue
+    depends_on:
+      refunddb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ticket-purchase:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3007/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -460,3 +520,4 @@ volumes:
   purchasedb:
   analyticdb:
   frauddb:
+  refunddb:
