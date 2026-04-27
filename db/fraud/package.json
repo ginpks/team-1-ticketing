@@ -1,0 +1,12 @@
+{
+  "name": "fraud-db",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node init.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.0.0"
+  }
+}
