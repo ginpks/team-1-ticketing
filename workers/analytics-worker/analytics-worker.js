@@ -5,16 +5,21 @@ import redis from 'redis'
 const { Pool } = pkg
 
 const channelName = process.env.PURCHASE_CONFIRMED_CHANNEL || 'purchases:confirmed'
+const eventBrowseQueueName = process.env.EVENT_BROWSE_ANALYTICS_QUEUE || 'event-catalog:browsed'
+const eventBrowseDlqName = process.env.EVENT_BROWSE_ANALYTICS_DLQ || 'event-catalog:browsed:dlq'
 const healthPort = process.env.HEALTH_PORT || 4001
 const redisUrl = process.env.REDIS_URL || 'redis://redis:6379'
 const pool = new Pool({ connectionString: process.env.ANALYTIC_DATABASE_URL })
 const subscriber = redis.createClient({ url: redisUrl })
+const browseQueue = redis.createClient({ url: redisUrl })
 const healthRedis = redis.createClient({ url: redisUrl })
 const app = express()
 
 let lastProcessedAt = null
+let lastBrowseProcessedAt = null
 let lastError = null
 let processedCount = 0
+let browsedProcessedCount = 0
 
 // Keep startup self-contained so the worker can run against a fresh analytics DB
 // or an older local volume that was created before the unique event constraint.
@@ -91,6 +96,11 @@ healthRedis.on('error', err => {
   console.error('Analytics health Redis error:', err.message)
 })
 
+browseQueue.on('error', err => {
+  lastError = err.message
+  console.error('Analytics browse queue Redis error:', err.message)
+})
+
 // Apply one confirmed purchase to analytics. The processed_purchase_confirmations
 // insert is the idempotency guard: if the same purchase_id arrives twice, the
 // second message commits without touching tickets_sold or revenue.
@@ -155,6 +165,110 @@ const recordPurchaseConfirmed = async (purchase) => {
   }
 }
 
+// Temporary adapter for the future event-catalog queue payload.
+// Replace this once event-catalog owns a real queue contract. Expected shape for now:
+// {
+//   "event": "Concert A",
+//   "peak_hour_browsed": "2026-04-27T18:00:00.000Z",
+//   "browsed_count": 12
+// }
+// If event-catalog ultimately publishes event_id instead of event name, map it to the
+// same analytics.event value used by purchases before writing to the analytics DB.
+const parseEventBrowseAnalytics = (rawMessage) => {
+  const payload = JSON.parse(rawMessage)
+  const event = payload.event ?? payload.event_name ?? payload.event_id
+  const browsedCount = Number(payload.browsed_count ?? payload.browse_count ?? payload.count)
+  const peakHourBrowsed = new Date(payload.peak_hour_browsed ?? payload.peak_hour ?? payload.browsed_at)
+
+  if (!event) {
+    throw new Error('event is required')
+  }
+
+  if (!Number.isInteger(browsedCount) || browsedCount < 0) {
+    throw new Error('browsed_count must be a non-negative integer')
+  }
+
+  if (Number.isNaN(peakHourBrowsed.getTime())) {
+    throw new Error('peak_hour_browsed must be a valid timestamp')
+  }
+
+  return {
+    event: String(event),
+    browsedCount,
+    peakHourBrowsed
+  }
+}
+
+const pushBrowseMessageToDlq = async (rawMessage, reason) => {
+  try {
+    await browseQueue.rPush(eventBrowseDlqName, JSON.stringify({
+      rawMessage,
+      reason,
+      failedAt: new Date().toISOString()
+    }))
+  } catch (err) {
+    lastError = err.message
+    console.error('Failed to push event browse analytics message to DLQ:', err.message)
+  }
+}
+
+// Applies browse analytics from the future event-catalog queue. This currently
+// treats browsed_count as the latest aggregate for an event/hour. If the producer
+// later sends deltas instead, replace the SET below with an increment.
+const recordEventBrowseAnalytics = async ({ event, browsedCount, peakHourBrowsed }) => {
+  await pool.query(
+    `INSERT INTO analytics (event, peak_hour, browsed_count)
+     VALUES ($1, date_trunc('hour', $2::timestamp), $3)
+     ON CONFLICT (event)
+     DO UPDATE SET
+       peak_hour = date_trunc('hour', $2::timestamp),
+       browsed_count = $3`,
+    [event, peakHourBrowsed.toISOString(), browsedCount]
+  )
+}
+
+const handleEventBrowseAnalytics = async (rawMessage) => {
+  let analyticsEvent
+
+  try {
+    analyticsEvent = parseEventBrowseAnalytics(rawMessage)
+  } catch (err) {
+    lastError = err.message
+    console.error('Invalid event browse analytics message:', err.message)
+    await pushBrowseMessageToDlq(rawMessage, err.message)
+    return
+  }
+
+  try {
+    await recordEventBrowseAnalytics(analyticsEvent)
+    browsedProcessedCount += 1
+    lastBrowseProcessedAt = new Date().toISOString()
+    lastError = null
+    console.log(`Updated browse analytics for event ${analyticsEvent.event}`)
+  } catch (err) {
+    lastError = err.message
+    console.error(`Failed to update browse analytics for event ${analyticsEvent.event}:`, err.message)
+    await pushBrowseMessageToDlq(rawMessage, err.message)
+  }
+}
+
+const startEventBrowseQueueConsumer = async () => {
+  console.log(`Analytics worker listening on event browse queue ${eventBrowseQueueName}`)
+
+  while (true) {
+    try {
+      const result = await browseQueue.brPop(eventBrowseQueueName, 0)
+      if (result) {
+        await handleEventBrowseAnalytics(result.element)
+      }
+    } catch (err) {
+      lastError = err.message
+      console.error('Event browse analytics queue loop error:', err.message)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
+}
+
 // Redis pub/sub delivers message bodies as strings, so this handler parses the
 // purchase confirmation and delegates the transactional DB update above.
 const handlePurchaseConfirmed = async (message) => {
@@ -188,6 +302,8 @@ const handlePurchaseConfirmed = async (message) => {
 app.get('/health', async (_req, res) => {
   const checks = {}
   let healthy = true
+  let eventBrowseQueueDepth = null
+  let eventBrowseDlqDepth = null
 
   try {
     await pool.query('SELECT 1')
@@ -199,6 +315,8 @@ app.get('/health', async (_req, res) => {
 
   try {
     await healthRedis.ping()
+    eventBrowseQueueDepth = await healthRedis.lLen(eventBrowseQueueName)
+    eventBrowseDlqDepth = await healthRedis.lLen(eventBrowseDlqName)
     checks.redis = { status: 'healthy' }
   } catch (err) {
     healthy = false
@@ -209,8 +327,14 @@ app.get('/health', async (_req, res) => {
     status: healthy ? 'healthy' : 'unhealthy',
     service: 'analytics-worker',
     channelName,
+    eventBrowseQueueName,
+    eventBrowseQueueDepth,
+    eventBrowseDlqName,
+    eventBrowseDlqDepth,
     processedCount,
+    browsedProcessedCount,
     lastProcessedAt,
+    lastBrowseProcessedAt,
     lastError,
     timestamp: new Date().toISOString(),
     checks
@@ -223,10 +347,12 @@ const startWorker = async () => {
   try {
     await ensureAnalyticsTable()
     await subscriber.connect()
+    await browseQueue.connect()
     await healthRedis.connect()
 
     await subscriber.subscribe(channelName, handlePurchaseConfirmed)
     console.log(`Analytics worker subscribed to ${channelName}`)
+    startEventBrowseQueueConsumer()
 
     app.listen(healthPort, () => {
       console.log(`Analytics worker health endpoint running on port ${healthPort}`)
