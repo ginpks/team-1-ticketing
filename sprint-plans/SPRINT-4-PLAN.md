@@ -9,6 +9,7 @@
 ## Goal
 
 [Which services will you replicate? What is the exact `--scale` command? What polish work remains?]
+
 The ticket-purchase, payment, and event catalog services will be replicated.
 
 ---
