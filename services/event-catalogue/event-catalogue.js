@@ -8,11 +8,16 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3003;
 const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
 const client = redis.createClient({ url: redisUrl });
+const subscriber = redis.createClient({ url: redisUrl });
 
 app.use(express.json());
 
 client.on("error", (err) => {
-  console.error("Redis error:", err.message);
+  console.error("Client Redis error:", err.message);
+});
+
+subscriber.on("error", (err) => {
+  console.error("Subscriber Redis error:", err.message);
 });
 
 if (!process.env.DATABASE_URL) {
@@ -206,7 +211,28 @@ app.listen(port, async () => {
 
   try {
     await client.connect();
-    console.log("Connected to Redis successfully");
+    await subscriber.connect();
+    console.log("Event Catalog service connected to Redis");
+
+    await subscriber.subscribe("purchases:confirmed", async (message) => {
+      try {
+        const { seat, event } = JSON.parse(message);
+        if (!seat || !event) return;
+
+        await pool.query(
+          "UPDATE seats SET status = 'sold' WHERE seat_id = $1 AND event_id = $2",
+          [seat, event],
+        );
+
+        await client.del(`events:${event}`);
+        console.log(
+          `Seat ${seat} marked as sold, cache invalidated for event ${event}`,
+        );
+      } catch (err) {
+        console.error("Error handling purchases:confirmed:", err.message);
+      }
+    });
+    console.log("Subscribed to purchases:confirmed");
   } catch (err) {
     console.error("Failed to connect to Redis:", err.message);
   }
