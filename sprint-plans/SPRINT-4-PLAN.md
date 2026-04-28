@@ -9,6 +9,7 @@
 ## Goal
 
 [Which services will you replicate? What is the exact `--scale` command? What polish work remains?]
+The ticket-purchase, payment, and event catalog services will be replicated.
 
 ---
 
@@ -21,7 +22,7 @@
 | Aryan Vakil    | `db/refund/`                                                |
 | Tun Lin Naine  | `workers/waitlist-worker`                                   |
 | Din Masic      | `services/ticket-purchase/`                                 |
-| Gin Park       | `workers/analytics-worker/`                                 |
+| Gin Park       | `workers/analytics-worker/`, `compose.yml`                                 |
 | Mark Gallant   | `k6/`                                                       |
 | Sidharth Jain  | `services/notification-worker/`, `Caddyfile`, `compose.yml` |
 ---
@@ -62,6 +63,7 @@
 ### Gin Park
 
 - [x] Implement part two of analytics worker that consumes from browse event queue and stores/updates related data in analytic db
+- [x] Replicate evenet catalog, ticket-purchase, and payment services.
 
 ### Sidharth Jain
 
