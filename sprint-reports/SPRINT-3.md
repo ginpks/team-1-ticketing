@@ -42,14 +42,12 @@
 - [x] Worker `GET /health` shows non-zero `dlq_depth` after poison pills are injected
 - [x] Worker status remains `healthy` while DLQ fills
 - [x] System handles failure scenarios gracefully (no dangling state, no crash loops)
-- [x] k6 poison pill test
-- [] All services/workers required for team size are implemented
 
 ---
 
 ## What Is Not Working / Cut
 
-- [x] All services/workers required for team size are implemented
+- [ ] k6 test has to be fixed to work with new ticket-purchase service
 - [ ] Have to finish implementing minor features to connect between the containers such as event-catalogue pushing to analytics browse. 
 
 ---
@@ -122,19 +120,45 @@ All requests flow through Caddy on port 8080. Each replica handles roughly equal
 ## k6 Results: Poison Pill Resilience (`k6/sprint-3-poison.js`)
 
 ```
-[Paste k6 summary output here]
+INFO[0035]   Sprint 3 — Poison-Pill Resilience Results   source=console
+INFO[0035]                                               source=console
+INFO[0035]   Normal-Purchase Latency                     source=console
+INFO[0035]     p50  : 2.0 ms                             source=console
+INFO[0035]     p95  : 2.0 ms  ✓ PASS                     source=console
+INFO[0035]     p99  : 3.0 ms                             source=console
+INFO[0035]     rps  : 45.5 req/s                         source=console
+INFO[0035]                                               source=console
+INFO[0035]   Poison-Pill Summary                         source=console
+INFO[0035]     API pills rejected (4xx)  : 695           source=console
+INFO[0035]     Worker DLQ depth (max)    : 6  ✓ PASS — pills reached DLQ  source=console
+INFO[0035]                                               source=console
+INFO[0035]   Normal-Traffic Resilience                   source=console
+INFO[0035]     Accept error rate         : 100.00 %  ✗ FAIL (threshold 2 %)  source=consol
+INFO[0035]                                               source=console
+INFO[0035]   Interpretation                              source=console
+INFO[0035]   ✓ Poison pills (queue-level) were detected and routed to the DLQ.  source=console
+INFO[0035]   ✓ p95 latency stayed under 600 ms — no throughput collapse under poison load.  source=console
+
+running (0m35.7s), 000/107 VUs, 1619 complete and 0 interrupted iterations
+health_monitor     ✓ [=======================] 1 VUs        35s       
+normal_purchases   ✓ [=======================] 000/100 VUs  30s        01.73 iters/s
+api_poison_pills   ✓ [=======================] 5 VUs        28s       
+final_health_check ✓ [=======================] 1 VUs        02.0s/10s  1/1 iters, 1 per VU
+ERRO[0036] thresholds on metrics 'normal_accept_errors' have been crossed 
 ```
 
 | Metric | Normal-only run | Mixed with poison pills | Change |
 | ------ | --------------- | ----------------------- | ------ |
-| p95    | | | |
-| RPS    | | | |
-| Error rate | | | |
+| p95    | 3.21ms | | |
+| RPS    | 7318 | | |
+| Error rate | 0.00% | | |
 
-[Explain: did throughput hold? Did the worker stay healthy throughout?]
+We were unable to get our testing script working due to a last minute conflict with our ticket-purchase service. Both were working independently but failed to function together after merges were put through.
 
 ---
 
 ## Blockers and Lessons Learned
 
 Arkar M: Learned how to connect multiple services together in the right order and the importance of idempotency on write paths that involve money.
+
+We failed to get our k6 test script working in time due to a last minute change in how the ticket-purchase service works which required changes to the test. The test script and the service were being developed independently and when they came together they did not work. It seems obvious in hindsight that a testing script would need to know exactly how a service is implemented in order to test that service, but in the end we didn't have time to get it sorted out together. We learned to start earlier and to coordinate more about our progress and implementation so that last minute changes like this don't break each other's code.
