@@ -2,7 +2,7 @@
 
 **Sprint:** 3 — Reliability and Poison Pills  
 **Tag:** `sprint-3`  
-**Submitted:** [date, before 04.28 class]
+**Submitted:** [4-27-2026]
 
 ---
 
@@ -15,6 +15,8 @@
 - Implemented the Refund Service with an idempotent POST /refunds endpoint. The service validates the purchase exists via a synchronous call to the Ticket Purchase Service, calls the Payment Service to reverse the charge, and pushes to the waitlist queue so the next waitlisted user can be promoted.
 
 - Implemented the foundational database layer for the refund service, including schema design, Docker-based deployment, and data insertion logic.
+
+- Implemented k6 poison pill testing that verifies the system can handle malformed data and requests gracefully without stalling, crashing, or getting clogged.
 ---
 
 ## Individual Contributions
@@ -24,7 +26,7 @@
 | Tun Lin Naine  | waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/39|
 | Aryan          | Created refund db and storeRefund logic | [PR #37](https://github.com/ginpks/team-1-ticketing/pull/37) |
 | Vihaan Sejwani | Added seat availability checking route in `event-catalogue` service, modified the post purchase route in `ticket-purchase` service to use it, subscribed `event-catalogue ` service to `purchases:confirmed` and `seat:released` queues from redis to update seat status in the database accordingly.                                                                                                        | [PR #43](https://github.com/ginpks/team-1-ticketing/pull/43)                                                                                                                                                                                                                |
-| Mark Gallant   | Modified k6 script from sprint-1 to better stress the system and provide better analytics. Implemented async test script to hit the async pipeline and provide sprint metrics. Contributed to Sprint-2 report with metric analysis based on test results.               | [PR #30](https://github.com/ginpks/team-1-ticketing/pull/30), [PR #31](https://github.com/ginpks/team-1-ticketing/pull/31)                                                                                                                                                                                                                                       | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
+| Mark Gallant   | Implemented poison pill k6 test and helper scripts to send bad data to the redis queue | [PR #44](https://github.com/ginpks/team-1-ticketing/pull/44)                                                                                                                                                                                                                                   | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Payment Service, Ticket Request Service                                                                                                                                                                                                                                 | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15)                                                                                                                                                                                                                |
 | Gin Park       | Analytics Worker part two boilerplate with poison pill handling | https://github.com/ginpks/team-1-ticketing/pull/41 |
 | Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
@@ -40,6 +42,7 @@
 - [x] Worker `GET /health` shows non-zero `dlq_depth` after poison pills are injected
 - [x] Worker status remains `healthy` while DLQ fills
 - [x] System handles failure scenarios gracefully (no dangling state, no crash loops)
+- [x] k6 poison pill test
 - [] All services/workers required for team size are implemented
 
 ---
@@ -59,8 +62,12 @@ How to inject a poison pill:
 # From inside holmes:
 docker compose exec holmes bash
 
-# Example — publish a malformed message directly to the queue:
-redis-cli -h redis RPUSH your-queue '{"this": "is malformed"}'
+# Run the helper script to send bad data to the queue
+./k6/poison-seed.sh
+
+# Run the k6 test
+# Note: the above helper script can be run while the k6 test is running to see the DLQ update in real time
+k6 run /k6/sprint-3-poison.js
 ```
 
 Worker health before injection:
