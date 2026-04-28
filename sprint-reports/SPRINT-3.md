@@ -40,13 +40,14 @@
 - [x] Worker `GET /health` shows non-zero `dlq_depth` after poison pills are injected
 - [x] Worker status remains `healthy` while DLQ fills
 - [x] System handles failure scenarios gracefully (no dangling state, no crash loops)
-- [x] All services/workers required for team size are implemented
+- [] All services/workers required for team size are implemented
 
 ---
 
 ## What Is Not Working / Cut
 
 - [x] All services/workers required for team size are implemented
+- [ ] Have to finish implementing minor features to connect between the containers such as event-catalogue pushing to analytics browse. 
 
 ---
 
