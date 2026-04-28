@@ -233,6 +233,26 @@ app.listen(port, async () => {
       }
     });
     console.log("Subscribed to purchases:confirmed");
+
+    await subscriber.subscribe("seat:released", async (message) => {
+      try {
+        const { seat, event } = JSON.parse(message);
+        if (!seat || !event) return;
+
+        await pool.query(
+          "UPDATE seats SET status = 'available' WHERE seat_id = $1 AND event_id = $2",
+          [seat, event],
+        );
+
+        await client.del(`events:${event}`);
+        console.log(
+          `Seat ${seat} marked as available, cache invalidated for event ${event}`,
+        );
+      } catch (err) {
+        console.error("Error handling seat:released:", err.message);
+      }
+    });
+    console.log("Subscribed to seat:released");
   } catch (err) {
     console.error("Failed to connect to Redis:", err.message);
   }
