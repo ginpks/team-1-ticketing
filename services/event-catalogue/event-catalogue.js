@@ -153,6 +153,7 @@ app.get("/events/:event_id/seats/:seat_id", async (req, res) => {
 
     if (seat.status !== "available") {
       return res.status(409).json({
+        available: false,
         error: "Seat is not available",
         status: seat.status,
       });

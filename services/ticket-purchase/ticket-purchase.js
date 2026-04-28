@@ -4,6 +4,8 @@ import pkg from "pg";
 
 const PAYMENT_SERVICE_URL =
   process.env.PAYMENT_SERVICE_URL || "http://payment-service:3000";
+const EVENT_CATALOGUE_URL =
+  process.env.EVENT_CATALOGUE_URL || "http://event-catalogue:3003";
 const app = express();
 const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -136,6 +138,22 @@ app.post("/purchases", async (req, res) => {
       });
     }
 
+    // ── Seat availability check ──────────────────────────────────────────────
+    const seatCheckRes = await fetch(
+      `${EVENT_CATALOGUE_URL}/events/${event}/seats/${seat}`,
+    );
+    if (seatCheckRes.status === 404) {
+      return res.status(404).json({ error: "Seat not found for this event" });
+    }
+    if (seatCheckRes.status === 409) {
+      return res.status(409).json({ error: "Seat is not available" });
+    }
+    if (!seatCheckRes.ok) {
+      return res
+        .status(502)
+        .json({ error: "Failed to verify seat availability" });
+    }
+
     // ── Store everything as pending in one DB transaction ────────────────────
     const dbClient = await pool.connect();
     let purchaseId;
@@ -207,4 +225,3 @@ app.listen(port, async () => {
     console.error("Failed to connect to Redis:", err.message);
   }
 });
-
