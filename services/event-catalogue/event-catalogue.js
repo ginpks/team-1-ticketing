@@ -8,11 +8,16 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3003;
 const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
 const client = redis.createClient({ url: redisUrl });
+const subscriber = redis.createClient({ url: redisUrl });
 
 app.use(express.json());
 
 client.on("error", (err) => {
-  console.error("Redis error:", err.message);
+  console.error("Client Redis error:", err.message);
+});
+
+subscriber.on("error", (err) => {
+  console.error("Subscriber Redis error:", err.message);
 });
 
 if (!process.env.DATABASE_URL) {
@@ -127,6 +132,48 @@ app.get("/events/:event_id", async (req, res) => {
   }
 });
 
+// ------------- GET /events/:event_id/seats/:seat_id -------------
+app.get("/events/:event_id/seats/:seat_id", async (req, res) => {
+  const { event_id, seat_id } = req.params;
+
+  if (!event_id) {
+    return res.status(400).json({ error: "event_id is required" });
+  }
+
+  if (!seat_id) {
+    return res.status(400).json({ error: "seat_id is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM seats WHERE seat_id = $1 AND event_id = $2",
+      [seat_id, event_id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Seat not found for this event" });
+    }
+
+    const seat = result.rows[0];
+
+    if (seat.status !== "available") {
+      return res.status(409).json({
+        available: false,
+        error: "Seat is not available",
+        status: seat.status,
+      });
+    }
+
+    return res.status(200).json({
+      available: true,
+      seat,
+    });
+  } catch (err) {
+    console.error("Error checking seat:", err.message);
+    return res.status(500).json({ error: "Failed to check seat availability" });
+  }
+});
+
 // ------------- POST events -------------
 app.post("/events", async (req, res) => {
   const { name, start_time, end_time, venue_name, venue_address } = req.body;
@@ -164,7 +211,48 @@ app.listen(port, async () => {
 
   try {
     await client.connect();
-    console.log("Connected to Redis successfully");
+    await subscriber.connect();
+    console.log("Event Catalog service connected to Redis");
+
+    await subscriber.subscribe("purchases:confirmed", async (message) => {
+      try {
+        const { seat, event } = JSON.parse(message);
+        if (!seat || !event) return;
+
+        await pool.query(
+          "UPDATE seats SET status = 'sold' WHERE seat_id = $1 AND event_id = $2",
+          [seat, event],
+        );
+
+        await client.del(`events:${event}`);
+        console.log(
+          `Seat ${seat} marked as sold, cache invalidated for event ${event}`,
+        );
+      } catch (err) {
+        console.error("Error handling purchases:confirmed:", err.message);
+      }
+    });
+    console.log("Subscribed to purchases:confirmed");
+
+    await subscriber.subscribe("seat:released", async (message) => {
+      try {
+        const { seat, event } = JSON.parse(message);
+        if (!seat || !event) return;
+
+        await pool.query(
+          "UPDATE seats SET status = 'available' WHERE seat_id = $1 AND event_id = $2",
+          [seat, event],
+        );
+
+        await client.del(`events:${event}`);
+        console.log(
+          `Seat ${seat} marked as available, cache invalidated for event ${event}`,
+        );
+      } catch (err) {
+        console.error("Error handling seat:released:", err.message);
+      }
+    });
+    console.log("Subscribed to seat:released");
   } catch (err) {
     console.error("Failed to connect to Redis:", err.message);
   }

@@ -38,6 +38,31 @@ const init = async () => {
 //create tables
 await init();
 
+const seedClient = await eventPool.connect();
+try {
+  await seedClient.query(`
+    INSERT INTO events (event_id, name, start_time, end_time, venue_name, venue_address)
+    VALUES ('a0000000-0000-0000-0000-000000000001', 'Concert', '2026-04-11T14:30:00Z', '2026-04-11T16:00:00Z', 'MSG', 'NYC')
+    ON CONFLICT (event_id) DO NOTHING
+  `);
+  for (let i = 1; i <= 1000; i++) {
+    const seatId = `b0000000-0000-0000-${String(i).padStart(4, "0")}-000000000000`;
+    await seedClient.query(
+      `
+      INSERT INTO seats (seat_id, event_id, seat_number, section, price, status)
+      VALUES ($1, 'a0000000-0000-0000-0000-000000000001', $2, 'E', 12.22, 'available')
+      ON CONFLICT (seat_id) DO NOTHING
+    `,
+      [seatId, `${i}E`],
+    );
+  }
+  console.log("Seeded known UUIDs for k6 testing");
+} catch (err) {
+  console.error(err);
+} finally {
+  seedClient.release();
+}
+
 //add event
 const event = {
   name: "Concert",

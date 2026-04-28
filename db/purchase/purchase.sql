@@ -4,7 +4,8 @@ CREATE TABLE purchases (
   status TEXT NOT NULL,
   idempotency_key TEXT NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(idempotency_key)
 );
 
 CREATE TABLE reservations (
@@ -12,8 +13,9 @@ CREATE TABLE reservations (
   purchase_id INT NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
   event TEXT NOT NULL,
   seat TEXT NOT NULL,
-  start_time TIMESTAMP NOT NULL,
-  end_time TIMESTAMP NOT NULL
+  start_time TIMESTAMP,
+  end_time TIMESTAMP,
+  UNIQUE(event, seat)
 );
 
 CREATE TABLE payments (
