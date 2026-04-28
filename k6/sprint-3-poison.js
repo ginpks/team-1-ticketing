@@ -151,8 +151,8 @@ export function setup() {
 function makeValidPurchase() {
   return JSON.stringify({
     idempotency_key: `poison-test-good-${__VU}-${__ITER}-${Date.now()}`,
-    event:           "A Good Show",
-    seat:            `A${Math.floor(Math.random() * 200) + 1}`,
+    event:           "a0000000-0000-0000-0000-000000000001",
+    seat:            "b0000000-0000-0000-0000-000000000001A",
     start_time:      "2025-09-01T19:00:00Z",
     end_time:        "2025-09-01T22:00:00Z",
     amount:          (Math.random() * 90 + 10).toFixed(2),
