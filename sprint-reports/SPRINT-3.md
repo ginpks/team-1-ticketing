@@ -27,7 +27,7 @@
 | Mark Gallant   | Modified k6 script from sprint-1 to better stress the system and provide better analytics. Implemented async test script to hit the async pipeline and provide sprint metrics. Contributed to Sprint-2 report with metric analysis based on test results.               | [PR #30](https://github.com/ginpks/team-1-ticketing/pull/30), [PR #31](https://github.com/ginpks/team-1-ticketing/pull/31)                                                                                                                                                                                                                                       | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Payment Service, Ticket Request Service                                                                                                                                                                                                                                 | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15)                                                                                                                                                                                                                |
 | Gin Park       | Analytics Worker part two boilerplate with poison pill handling | https://github.com/ginpks/team-1-ticketing/pull/41 |
-| Sidharth       | Notification worker                                                                                                                                                                                                                         | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23)                                                                                                                                                                                                                |
+| Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
 | Arkar Myint | Built `services/refund-service/` — `POST /refunds` idempotent endpoint that validates purchase exists via sync call to ticket-purchase, calls payment service to reverse charge, and pushes to waitlist-queue on success. `GET /health` checks Postgres and Redis. | [PR #38](https://github.com/ginpks/team-1-ticketing/pull/38) |
 
 ---
@@ -36,11 +36,11 @@
 
 ## What Is Working
 
-- [ ] Poison pill handling: malformed messages go to DLQ, worker keeps running
-- [ ] Worker `GET /health` shows non-zero `dlq_depth` after poison pills are injected
-- [ ] Worker status remains `healthy` while DLQ fills
-- [ ] System handles failure scenarios gracefully (no dangling state, no crash loops)
-- [ ] All services/workers required for team size are implemented
+- [x] Poison pill handling: malformed messages go to DLQ, worker keeps running
+- [x] Worker `GET /health` shows non-zero `dlq_depth` after poison pills are injected
+- [x] Worker status remains `healthy` while DLQ fills
+- [x] System handles failure scenarios gracefully (no dangling state, no crash loops)
+- [x] All services/workers required for team size are implemented
 
 ---
 
@@ -83,8 +83,33 @@ Worker health after injection:
   "last_job_at": "2025-04-24T..."
 }
 ```
-
+Worker status remains `healthy` throughout — poison pills are routed to DLQ and good messages continue flowing.
 ---
+
+### Verify DLQ contents in Redis
+
+```bash
+redis-cli -h redis LRANGE purchases:confirmed:dlq 0 -1
+```
+
+
+### Caddy Load Balancer
+
+Start with 3 replicas:
+
+```bash
+docker compose up --build --scale ticket-purchase=3
+```
+
+Verify round-robin distribution:
+
+```bash
+docker compose exec holmes bash
+for i in $(seq 1 9); do curl -s http://caddy/health | jq -r '.service'; done
+```
+
+All requests flow through Caddy on port 8080. Each replica handles roughly equal traffic.
+
 
 ## k6 Results: Poison Pill Resilience (`k6/sprint-3-poison.js`)
 
