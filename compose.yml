@@ -116,6 +116,10 @@ services:
     depends_on:
       ticket-purchase:
         condition: service_healthy
+      event-catalogue:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
       interval: 10s
