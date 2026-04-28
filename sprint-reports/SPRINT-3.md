@@ -1,4 +1,4 @@
-# Sprint 3 Report — [Team Name]
+# Sprint 3 Report — Team 1
 
 **Sprint:** 3 — Reliability and Poison Pills  
 **Tag:** `sprint-3`  
@@ -10,15 +10,24 @@
 
 [What failure scenarios does the system now handle? Which queues have DLQ handling? What happens when a poison pill is injected?]
 
+- Implemented boilerplate for part 2 of analytics worker that consumes from placeholder browse events queue and updates relevant data in analytic db along poison pill handling and DLQ depth return in its health check.
+
 ---
 
 ## Individual Contributions
 
 | Team Member | What They Delivered | Key Commits |
 | ----------- | ------------------- | ----------- |
-| [Name]      | | |
-| [Name]      | | |
-| [Name]      | | |
+| Tun Lin Naine  | analytic db and waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/20, https://github.com/ginpks/team-1-ticketing/pull/28|
+| Aryan          | Added `GET \health` endpoint for ticket purchase worker, moved ticket purchase worker to the workers folder and created/updated related Dockerfile and package.json | [PR #22](https://github.com/ginpks/team-1-ticketing/pull/22) |
+| Vihaan Sejwani | Added caching to Event Catalog service, the cache interacts with `GET /events`, `GET /events/:event_id`, `POST /events` endpoints. Created Architecture diagram.                                                                                                        | [PR #25](https://github.com/ginpks/team-1-ticketing/pull/25)                                                                                                                                                                                                                |
+| Mark Gallant   | Modified k6 script from sprint-1 to better stress the system and provide better analytics. Implemented async test script to hit the async pipeline and provide sprint metrics. Contributed to Sprint-2 report with metric analysis based on test results.               | [PR #30](https://github.com/ginpks/team-1-ticketing/pull/30), [PR #31](https://github.com/ginpks/team-1-ticketing/pull/31)                                                                                                                                                                                                                                       | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
+| Din            | Payment Service, Ticket Request Service                                                                                                                                                                                                                                 | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15)                                                                                                                                                                                                                |
+| Gin Park       | Analytics Worker part two boilerplate with poison pill handling | https://github.com/ginpks/team-1-ticketing/pull/41 |
+| Sidharth       | Notification worker                                                                                                                                                                                                                         | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23)                                                                                                                                                                                                                |
+| Arkar Myint    | Built `notification-service` — `POST /notify` logs simulated confirmation emails, `GET /health` returns service status. Added to `compose.yml` on port 3005. | [PR #21](https://github.com/ginpks/team-1-ticketing/pull/21), [PR #27](https://github.com/ginpks/team-1-ticketing/pull/27) |
+
+---
 
 ---
 
