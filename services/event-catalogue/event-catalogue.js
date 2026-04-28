@@ -127,6 +127,47 @@ app.get("/events/:event_id", async (req, res) => {
   }
 });
 
+// ------------- GET /events/:event_id/seats/:seat_id -------------
+app.get("/events/:event_id/seats/:seat_id", async (req, res) => {
+  const { event_id, seat_id } = req.params;
+
+  if (!event_id) {
+    return res.status(400).json({ error: "event_id is required" });
+  }
+
+  if (!seat_id) {
+    return res.status(400).json({ error: "seat_id is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM seats WHERE seat_id = $1 AND event_id = $2",
+      [seat_id, event_id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Seat not found for this event" });
+    }
+
+    const seat = result.rows[0];
+
+    if (seat.status !== "available") {
+      return res.status(409).json({
+        error: "Seat is not available",
+        status: seat.status,
+      });
+    }
+
+    return res.status(200).json({
+      available: true,
+      seat,
+    });
+  } catch (err) {
+    console.error("Error checking seat:", err.message);
+    return res.status(500).json({ error: "Failed to check seat availability" });
+  }
+});
+
 // ------------- POST events -------------
 app.post("/events", async (req, res) => {
   const { name, start_time, end_time, venue_name, venue_address } = req.body;
