@@ -68,7 +68,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -87,6 +87,7 @@ services:
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
       - PAYMENT_SERVICE_URL=http://payment-service:3000
+      - EVENT_CATALOGUE_URL=http://event-catalogue:3003
     depends_on:
       redis:
         condition: service_healthy
@@ -148,7 +149,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4000/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -191,7 +192,7 @@ services:
       eventdb:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3003/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -204,7 +205,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -227,7 +228,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3006/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -315,6 +316,8 @@ services:
       - team-net
     environment:
       - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - EVENT_BROWSE_ANALYTICS_QUEUE=event-catalog:browsed
+      - EVENT_BROWSE_ANALYTICS_DLQ=event-catalog:browsed:dlq
       - HEALTH_PORT=4001
       - ANALYTIC_DATABASE_URL=postgres://user:pass@analyticdb:5432/analyticdb
       - REDIS_URL=redis://redis:6379
@@ -326,7 +329,65 @@ services:
       analytic-db:
         condition: service_started
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4001/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frauddb:
+    image: postgres:16
+    container_name: frauddb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: frauddb
+    volumes:
+      - frauddb:/var/lib/postgresql/data
+    networks:
+      - team-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d frauddb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+ 
+  fraud-db:
+    build: ./db/fraud
+    depends_on:
+      frauddb:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://user:pass@frauddb:5432/frauddb
+    networks:
+      - team-net
+ 
+  fraud-worker:
+    build:
+      context: ./workers/fraud-worker
+      dockerfile: Dockerfile
+    container_name: fraud-worker
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    networks:
+      - team-net
+    environment:
+      - HEALTH_PORT=4002
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://user:pass@frauddb:5432/frauddb
+      - PURCHASE_CONFIRMED_CHANNEL=purchases:confirmed
+      - DLQ_NAME=fraud-dlq
+    depends_on:
+      redis:
+        condition: service_healthy
+      frauddb:
+        condition: service_healthy
+      fraud-db:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4002/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -347,7 +408,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d eventdb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -365,7 +426,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d purchasedb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -383,7 +444,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d analyticdb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d analyticdb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -401,7 +462,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d refunddb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d refunddb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -432,7 +493,7 @@ services:
       - PORT=3005
       - SERVICE_NAME=notification-service
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3005/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -465,7 +526,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3007/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3007/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -478,4 +539,5 @@ volumes:
   eventdb:
   purchasedb:
   analyticdb:
+  frauddb:
   refunddb:
