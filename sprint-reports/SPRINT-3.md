@@ -12,6 +12,8 @@
 
 - Implemented boilerplate for part 2 of analytics worker that consumes from placeholder browse events queue and updates relevant data in analytic db along poison pill handling and DLQ depth return in its health check.
 
+- Implemented the Refund Service with an idempotent POST /refunds endpoint. The service validates the purchase exists via a synchronous call to the Ticket Purchase Service, calls the Payment Service to reverse the charge, and pushes to the waitlist queue so the next waitlisted user can be promoted.
+
 ---
 
 ## Individual Contributions
@@ -25,7 +27,7 @@
 | Din            | Payment Service, Ticket Request Service                                                                                                                                                                                                                                 | [PR #15](https://github.com/ginpks/team-1-ticketing/pull/15)                                                                                                                                                                                                                |
 | Gin Park       | Analytics Worker part two boilerplate with poison pill handling | https://github.com/ginpks/team-1-ticketing/pull/41 |
 | Sidharth       | Notification worker                                                                                                                                                                                                                         | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23)                                                                                                                                                                                                                |
-| Arkar Myint    | Built `notification-service` — `POST /notify` logs simulated confirmation emails, `GET /health` returns service status. Added to `compose.yml` on port 3005. | [PR #21](https://github.com/ginpks/team-1-ticketing/pull/21), [PR #27](https://github.com/ginpks/team-1-ticketing/pull/27) |
+| Arkar Myint | Built `services/refund-service/` — `POST /refunds` idempotent endpoint that validates purchase exists via sync call to ticket-purchase, calls payment service to reverse charge, and pushes to waitlist-queue on success. `GET /health` checks Postgres and Redis. | [PR #38](https://github.com/ginpks/team-1-ticketing/pull/38) |
 
 ---
 
@@ -42,6 +44,8 @@
 ---
 
 ## What Is Not Working / Cut
+
+- [x] All services/workers required for team size are implemented
 
 ---
 
@@ -98,3 +102,5 @@ Worker health after injection:
 ---
 
 ## Blockers and Lessons Learned
+
+Arkar M: Learned how to connect multiple services together in the right order and the importance of idempotency on write paths that involve money.
