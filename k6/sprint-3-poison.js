@@ -12,7 +12,7 @@ import { check, sleep } from "k6";
 import { Counter, Rate, Trend, Gauge } from "k6/metrics";
 
 // ── Service URLs ──────────────────────────────────────────────────────────────
-const PURCHASE_URL        = "http://ticket-purchase:3001/purchases";
+const PURCHASE_URL        = "http://caddy/purchases";
 const TICKET_WORKER_HEALTH = "http://ticket-worker:4000/health";
 const NOTIF_WORKER_HEALTH  = "http://notification-worker:3006/health";
 
