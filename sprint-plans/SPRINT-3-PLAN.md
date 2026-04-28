@@ -32,12 +32,12 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 ## Tasks
 
 ### Arkar Myint
-- [ ] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
-- [ ] Validate purchase exists via sync call to Ticket Purchase
-- [ ] Call Payment Service synchronously to reverse charge
-- [ ] Push to `waitlist-queue` on successful refund
-- [ ] Implement `GET /health` endpoint
-- [ ] Add to `compose.yml` with healthcheck
+- [x] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
+- [x] Validate purchase exists via sync call to Ticket Purchase
+- [x] Call Payment Service synchronously to reverse charge
+- [x] Push to `waitlist-queue` on successful refund
+- [x] Implement `GET /health` endpoint
+- [x] Add to `compose.yml` with healthcheck
 
 ### Vihaan Sejwani
 
