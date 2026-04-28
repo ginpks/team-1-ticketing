@@ -2,4 +2,9 @@
     reverse_proxy ticket-purchase:3001 {
         lb_policy round_robin
     }
+
+    reverse_proxy /events* event-catalogue:3003 {
+        lb_policy round_robin
+    }
+
 }
