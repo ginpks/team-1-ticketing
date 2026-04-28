@@ -16,16 +16,16 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 ## Ownership
 
-| Team Member    | Files / Directories Owned This Sprint                  |
-| -------------- | ------------------------------------------------------ |
-| Arkar Myint    | `services/refund-service/`                             |
-| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/` |
-| Aryan Vakil    | `db/refund/`                                           |
-| Tun Lin Naine  | `workers/waitlist-worker`                              |
-| Din Masic      | `services/ticket-purchase/`                            |
-| Gin Park       | `workers/analytics-worker/`                            |
-| Mark Gallant   | `k6/`                                                  |
-| Sidharth Jain  | `services/notification-worker`                         |
+| Team Member    | Files / Directories Owned This Sprint |
+| -------------- | ------------------------------------- |
+| Arkar Myint | `services/refund-service/` |
+| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
+| Aryan Vakil    | `db/refund/`              |
+| Tun Lin Naine  | `workers/waitlist-worker`             |
+| Din Masic      | `services/ticket-purchase/`           |
+| Gin Park       | `workers/analytics-worker/`           |
+| Mark Gallant   | `k6/`           |
+| Sidharth Jain      | `services/notification-worker/`, `Caddyfile`, `compose.yml`           |
 
 ---
 
@@ -68,9 +68,12 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 ### Sidharth Jain
 
-- [x] Build the Notification Worker that subscribes to purchases:confirmed pub/sub
-- [x] Call the Notification Service via POST /notify on each confirmed purchase
-- [x] Add `/health` for notification worker
+- [x] Add DLQ handling to notification worker — malformed messages and failed notification calls pushed to `purchases:confirmed:dlq`
+- [x] Update `/health` endpoint to include `queue_depth`, `dlq_depth` (read live from Redis), and `last_job_at`
+- [x] Worker remains `healthy` while DLQ fills — poison pills do not crash or block good messages
+- [x] Add Caddy as reverse proxy and load balancer in front of `ticket-purchase` service
+- [x] Remove static port and `container_name` from `ticket-purchase` to support `--scale`
+- [x] Verified round-robin distribution across 3 replicas via Holmes
 
 ### Mark Gallant
 

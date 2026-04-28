@@ -78,10 +78,7 @@ services:
     build:
       context: ./services/ticket-purchase
       dockerfile: Dockerfile
-    container_name: ticket-purchase
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     networks:
       - team-net
     environment:
@@ -100,6 +97,26 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - team-net
+    depends_on:
+      ticket-purchase:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -505,7 +522,7 @@ services:
       redis:
         condition: service_healthy
       ticket-purchase:
-        condition: service_healthy
+        condition: service_started
       payment-service:
         condition: service_healthy
     healthcheck:
