@@ -24,6 +24,16 @@ const init = async () => {
     await client.query("BEGIN");
     await client.query(eventTable);
     await client.query(seatTable);
+    await client.query(`
+  INSERT INTO events (event_id, name, start_time, end_time, venue_name, venue_address)
+  VALUES ('a0000000-0000-0000-0000-000000000001', 'Concert', '2026-04-11T14:30:00Z', '2026-04-11T16:00:00Z', 'MSG', 'NYC')
+  ON CONFLICT (event_id) DO NOTHING
+`);
+    await client.query(`
+  INSERT INTO seats (seat_id, event_id, seat_number, section, price, status)
+  VALUES ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '1E', 'E', 12.22, 'available')
+  ON CONFLICT (seat_id) DO NOTHING
+`);
     await client.query("COMMIT");
     console.log("tables created");
   } catch (err) {
