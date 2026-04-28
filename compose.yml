@@ -68,7 +68,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -90,6 +90,7 @@ services:
       - DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
       - PAYMENT_SERVICE_URL=http://payment-service:3000
+      - EVENT_CATALOGUE_URL=http://event-catalogue:3003
     depends_on:
       redis:
         condition: service_healthy
@@ -98,7 +99,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3001/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -131,7 +132,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4000/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -174,7 +175,7 @@ services:
       eventdb:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3003/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -187,7 +188,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -210,7 +211,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3006/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -311,7 +312,7 @@ services:
       analytic-db:
         condition: service_started
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:4001/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -390,7 +391,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d eventdb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d eventdb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -408,7 +409,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d purchasedb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d purchasedb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -426,7 +427,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d analyticdb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d analyticdb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -444,7 +445,7 @@ services:
     networks:
       - team-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d refunddb" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d refunddb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -475,7 +476,7 @@ services:
       - PORT=3005
       - SERVICE_NAME=notification-service
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3005/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -508,7 +509,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3007/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3007/health"]
       interval: 10s
       timeout: 5s
       retries: 3

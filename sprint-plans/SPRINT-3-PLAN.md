@@ -16,36 +16,41 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 ## Ownership
 
-| Team Member    | Files / Directories Owned This Sprint |
-| -------------- | ------------------------------------- |
-| Arkar Myint | `services/refund-service/` |
-| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
-| Aryan Vakil    | `db/refund/`              |
-| Tun Lin Naine  | `workers/waitlist-worker`             |
-| Din Masic      | `services/ticket-purchase/`           |
-| Gin Park       | `workers/analytics-worker/`           |
-| Mark Gallant   | `k6/`           |
-| Sidharth Jain      | `services/notification-worker`           |
+| Team Member    | Files / Directories Owned This Sprint                  |
+| -------------- | ------------------------------------------------------ |
+| Arkar Myint    | `services/refund-service/`                             |
+| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/` |
+| Aryan Vakil    | `db/refund/`                                           |
+| Tun Lin Naine  | `workers/waitlist-worker`                              |
+| Din Masic      | `services/ticket-purchase/`                            |
+| Gin Park       | `workers/analytics-worker/`                            |
+| Mark Gallant   | `k6/`                                                  |
+| Sidharth Jain  | `services/notification-worker`                         |
 
 ---
 
 ## Tasks
 
 ### Arkar Myint
-- [x] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
-- [x] Validate purchase exists via sync call to Ticket Purchase
-- [x] Call Payment Service synchronously to reverse charge
-- [x] Push to `waitlist-queue` on successful refund
-- [x] Implement `GET /health` endpoint
-- [x] Add to `compose.yml` with healthcheck
+
+- [ ] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
+- [ ] Validate purchase exists via sync call to Ticket Purchase
+- [ ] Call Payment Service synchronously to reverse charge
+- [ ] Push to `waitlist-queue` on successful refund
+- [ ] Implement `GET /health` endpoint
+- [ ] Add to `compose.yml` with healthcheck
 
 ### Vihaan Sejwani
 
-- [x] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
+- [] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
 - [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
+- [x] Create a seat availability route in `event-catalog` so the `ticket-purchase` can use it to check the seat availability.
+- [] Implement `event-catalog` subscribing to `purchase:confirmed` redis pub sub to update the availabilty of the seats.
+- [] Implement `event-catalog` subscribing to `seat:released` redis pub sub to update the availabilty of the seats.
 
 ### Aryan Vakil
-- [ ] Create db for refund service 
+
+- [ ] Create db for refund service
 
 ### Tun Lin Naine
 
@@ -60,7 +65,7 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 ### Gin Park
 
 - [x] Implement part two of analytics worker that consumes from browse event queue and stores/updates related data in analytic db
-      
+
 ### Sidharth Jain
 
 - [x] Build the Notification Worker that subscribes to purchases:confirmed pub/sub
@@ -75,7 +80,9 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 ---
 
 ## Risks
+
 - Merge conflicts could arise if mutliple members share a single service implemnentation. Careful planning and a structured git workflow is imperative.
+
 ---
 
 ## Definition of Done
