@@ -16,16 +16,16 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 
 ## Ownership
 
-| Team Member    | Files / Directories Owned This Sprint |
-| -------------- | ------------------------------------- |
-| Arkar Myint | `services/refund-service/` |
-| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`             |
-| Aryan Vakil    | `db/refund/`              |
-| Tun Lin Naine  | `workers/waitlist-worker`             |
-| Din Masic      | `services/ticket-purchase/`           |
-| Gin Park       | `workers/analytics-worker/`           |
-| Mark Gallant   | `k6/`           |
-| Sidharth Jain      | `services/notification-worker/`, `Caddyfile`, `compose.yml`           |
+| Team Member    | Files / Directories Owned This Sprint                       |
+| -------------- | ----------------------------------------------------------- |
+| Arkar Myint    | `services/refund-service/`                                  |
+| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`      |
+| Aryan Vakil    | `db/refund/`                                                |
+| Tun Lin Naine  | `workers/waitlist-worker`                                   |
+| Din Masic      | `services/ticket-purchase/`                                 |
+| Gin Park       | `workers/analytics-worker/`                                 |
+| Mark Gallant   | `k6/`                                                       |
+| Sidharth Jain  | `services/notification-worker/`, `Caddyfile`, `compose.yml` |
 
 ---
 
@@ -45,8 +45,8 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 - [] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
 - [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
 - [x] Create a seat availability route in `event-catalog` so the `ticket-purchase` can use it to check the seat availability.
-- [] Implement `event-catalog` subscribing to `purchase:confirmed` redis pub sub to update the availabilty of the seats.
-- [] Implement `event-catalog` subscribing to `seat:released` redis pub sub to update the availabilty of the seats.
+- [x] Implement `event-catalog` subscribing to `purchase:confirmed` redis pub sub to update the availabilty of the seats.
+- [x] Implement `event-catalog` subscribing to `seat:released` redis pub sub to update the availabilty of the seats.
 
 ### Aryan Vakil
 
