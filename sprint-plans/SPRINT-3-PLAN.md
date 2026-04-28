@@ -43,10 +43,10 @@ All of our queues currently have poison pill handling. Our goal is to implement/
 ### Vihaan Sejwani
 
 - [] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
-- [] Implement `ticket-purchase` service checking `event-catalog` for seat availability
+- [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
 - [x] Create a seat availability route in `event-catalog` so the `ticket-purchase` can use it to check the seat availability.
 - [] Implement `event-catalog` subscribing to `purchase:confirmed` redis pub sub to update the availabilty of the seats.
-- [] Create a patch seat route in `event-catalog` so the refund service can call it if no one is in the waitlist.
+- [] Implement `event-catalog` subscribing to `seat:released` redis pub sub to update the availabilty of the seats.
 
 ### Aryan Vakil
 
