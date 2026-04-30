@@ -18,11 +18,13 @@ async function resolveIds(eventName, seatName) {
   if (eventResult.rows.length === 0) return null;
   const event_id = eventResult.rows[0].event_id;
 
+  if (!seatName) return { event_id };
+
   const seatResult = await pool.query(
     "SELECT seat_id FROM seats WHERE event_id = $1 AND seat_number = $2 LIMIT 1",
     [event_id, seatName],
   );
-  if (seatResult.rows.length === 0) return null;
+  if (seatResult.rows.length === 0) return { event_id };
   const seat_id = seatResult.rows[0].seat_id;
 
   return { event_id, seat_id };
@@ -115,15 +117,21 @@ app.get("/events", async (_req, res) => {
   }
 });
 
-// ------------- GET events/:event_id -------------
-app.get("/events/:event_id", async (req, res) => {
-  const { event_id } = req.params;
+// ------------- GET events/:event_name -------------
+app.get("/events/:event_name", async (req, res) => {
+  const { event_name } = req.params;
 
-  if (!event_id) {
-    return res.status(400).json({ error: "event_id is required" });
+  if (!event_name) {
+    return res.status(400).json({ error: "event_name is required" });
   }
 
   try {
+    const ids = await resolveIds(event_name, null);
+    if (!ids?.event_id) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    const { event_id } = ids;
+
     const cached = await client.get(`events:${event_id}`);
     if (cached) {
       return res.status(200).json(JSON.parse(cached));
@@ -150,19 +158,28 @@ app.get("/events/:event_id", async (req, res) => {
   }
 });
 
-// ------------- GET /events/:event_id/seats/:seat_id -------------
-app.get("/events/:event_id/seats/:seat_id", async (req, res) => {
-  const { event_id, seat_id } = req.params;
+// ------------- GET /events/:event_name/seats/:seat_name -------------
+app.get("/events/:event_name/seats/:seat_name", async (req, res) => {
+  const { event_name, seat_name } = req.params;
 
-  if (!event_id) {
-    return res.status(400).json({ error: "event_id is required" });
+  if (!event_name) {
+    return res.status(400).json({ error: "event_name is required" });
   }
 
-  if (!seat_id) {
-    return res.status(400).json({ error: "seat_id is required" });
+  if (!seat_name) {
+    return res.status(400).json({ error: "seat_name is required" });
   }
 
   try {
+    const ids = await resolveIds(event_name, seat_name);
+    if (!ids?.event_id) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    if (!ids?.seat_id) {
+      return res.status(404).json({ error: "Seat not found for this event" });
+    }
+    const { event_id, seat_id } = ids;
+
     const result = await pool.query(
       "SELECT * FROM seats WHERE seat_id = $1 AND event_id = $2",
       [seat_id, event_id],
