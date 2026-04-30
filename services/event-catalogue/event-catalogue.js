@@ -10,6 +10,24 @@ const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
 const client = redis.createClient({ url: redisUrl });
 const subscriber = redis.createClient({ url: redisUrl });
 
+async function resolveIds(eventName, seatName) {
+  const eventResult = await pool.query(
+    "SELECT event_id FROM events WHERE name = $1 LIMIT 1",
+    [eventName],
+  );
+  if (eventResult.rows.length === 0) return null;
+  const event_id = eventResult.rows[0].event_id;
+
+  const seatResult = await pool.query(
+    "SELECT seat_id FROM seats WHERE event_id = $1 AND seat_number = $2 LIMIT 1",
+    [event_id, seatName],
+  );
+  if (seatResult.rows.length === 0) return null;
+  const seat_id = seatResult.rows[0].seat_id;
+
+  return { event_id, seat_id };
+}
+
 app.use(express.json());
 
 client.on("error", (err) => {
