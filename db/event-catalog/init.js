@@ -62,22 +62,3 @@ try {
 } finally {
   seedClient.release();
 }
-
-//add event
-const event = {
-  name: "Concert",
-  startTime: "2026-04-11T14:30:00Z",
-  endTime: "2026-04-11T16:00:00Z",
-  venueName: "MSG",
-  venueAddress: "NYC",
-};
-
-const seat = {
-  number: "1E",
-  section: "E",
-  price: 12.22,
-  status: "available",
-};
-
-const id = await storeEvent(event, seat);
-console.log(id);

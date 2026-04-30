@@ -252,14 +252,28 @@ app.listen(port, async () => {
     await subscriber.subscribe("purchases:confirmed", async (message) => {
       try {
         const { seat, event } = JSON.parse(message);
-        if (!seat || !event) return;
+        if (!seat || !event) {
+          console.error("purchases:confirmed missing seat or event", message);
+          return;
+        }
+
+        const ids = await resolveIds(event, seat);
+        if (!ids?.event_id) {
+          console.error(`purchases:confirmed event not found: ${event}`);
+          return;
+        }
+        if (!ids?.seat_id) {
+          console.error(
+            `purchases:confirmed seat not found: ${seat} in event ${event}`,
+          );
+          return;
+        }
 
         await pool.query(
           "UPDATE seats SET status = 'sold' WHERE seat_id = $1 AND event_id = $2",
-          [seat, event],
+          [ids.seat_id, ids.event_id],
         );
-
-        await client.del(`events:${event}`);
+        await client.del(`events:${ids.event_id}`);
         console.log(
           `Seat ${seat} marked as sold, cache invalidated for event ${event}`,
         );
@@ -272,14 +286,28 @@ app.listen(port, async () => {
     await subscriber.subscribe("seat:released", async (message) => {
       try {
         const { seat, event } = JSON.parse(message);
-        if (!seat || !event) return;
+        if (!seat || !event) {
+          console.error("seat:released missing seat or event", message);
+          return;
+        }
+
+        const ids = await resolveIds(event, seat);
+        if (!ids?.event_id) {
+          console.error(`seat:released event not found: ${event}`);
+          return;
+        }
+        if (!ids?.seat_id) {
+          console.error(
+            `seat:released seat not found: ${seat} in event ${event}`,
+          );
+          return;
+        }
 
         await pool.query(
           "UPDATE seats SET status = 'available' WHERE seat_id = $1 AND event_id = $2",
-          [seat, event],
+          [ids.seat_id, ids.event_id],
         );
-
-        await client.del(`events:${event}`);
+        await client.del(`events:${ids.event_id}`);
         console.log(
           `Seat ${seat} marked as available, cache invalidated for event ${event}`,
         );
