@@ -97,12 +97,12 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
     );
 
     await client.publish(
-      "purchase-events",
+      "seat:released",
       JSON.stringify({
         action: "purchase_created_from_waitlist",
         purchaseId,
-        event,
-        seat,
+        event: event,
+        seat: seat,
         status: "pending",
         createdAt: new Date().toISOString(),
       }),

@@ -212,7 +212,7 @@ services:
 
   notification-worker:
     build:
-      context: ./services/notification-worker
+      context: ./workers/notification-worker
       dockerfile: Dockerfile
     container_name: notification-worker
     restart: unless-stopped
