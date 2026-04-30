@@ -11,7 +11,7 @@ import { check, sleep } from "k6";
 import { Counter, Rate, Trend } from "k6/metrics";
 
 // ── Service URLs ───────────────
-const PURCHASE_URL  = "http://ticket-purchase:3001/purchases";
+const PURCHASE_URL  = "http://caddy/purchases";
 const WORKER_HEALTH = "http://ticket-worker:4000/health";    // tpQueueDepth lives here
 
 // ── Custom metrics ────────────────────────────────────────────────────────────
