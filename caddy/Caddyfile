@@ -1,0 +1,5 @@
+:80 {
+    reverse_proxy ticket-purchase:3001 {
+        lb_policy round_robin
+    }
+}
