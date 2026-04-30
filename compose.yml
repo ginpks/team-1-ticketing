@@ -109,7 +109,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
     networks:
       - team-net
     depends_on:
