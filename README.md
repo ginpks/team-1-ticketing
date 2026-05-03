@@ -23,10 +23,7 @@
 
 ```bash
 # Start everything with Sprint 4 service replicas
-docker compose up --build
-
-# Equivalent explicit scale command for verification
-docker compose up --build --scale payment-service=3 --scale ticket-purchase=3 --scale event-catalogue=3
+docker compose up --scale payment-service=3 --scale ticket-purchase=3 --scale event-catalogue=3 --build
 
 # Verify all services are healthy
 docker compose ps
@@ -40,6 +37,9 @@ docker compose logs -f
 # Open a shell in the holmes investigation container
 docker compose exec holmes bash
 ```
+
+Plain `docker compose up --build` starts one container for each service. Use the
+`--scale` command above for the Sprint 4 demo requirement.
 
 ### Base URLs (development)
 

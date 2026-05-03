@@ -52,8 +52,6 @@ services:
       context: ./services/payment-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    deploy:
-      replicas: 3
     networks:
       - team-net
     environment:
@@ -78,8 +76,6 @@ services:
       context: ./services/ticket-purchase
       dockerfile: Dockerfile
     restart: unless-stopped
-    deploy:
-      replicas: 3
     networks:
       - team-net
     environment:
@@ -182,8 +178,6 @@ services:
       context: ./services/event-catalogue
       dockerfile: Dockerfile
     restart: unless-stopped
-    deploy:
-      replicas: 3
     networks:
       - team-net
     environment:
