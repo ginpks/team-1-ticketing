@@ -1,4 +1,5 @@
 import express from "express";
+import os from "os";
 import redis from "redis";
 import pkg from "pg";
 
@@ -11,11 +12,17 @@ const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3001;
 const queueName = process.env.QUEUE_NAME || "ticket-purchase-queue";
+const replicaId = os.hostname();
 const client = redis.createClient({
   url: process.env.REDIS_URL || "redis://redis:6379",
 });
 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader("X-Replica-Id", replicaId);
+  console.log(`[ticket-purchase] replica ${replicaId} handled ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 client.on("error", (err) => {
   console.error("Redis error:", err.message);

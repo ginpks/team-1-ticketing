@@ -22,7 +22,7 @@
 ## How to Start the System
 
 ```bash
-# Start everything with Sprint 4 service replicas
+# Start everything with 3 service replicas
 docker compose up --scale payment-service=3 --scale ticket-purchase=3 --scale event-catalogue=3 --build
 
 # Verify all services are healthy
