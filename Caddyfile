@@ -1,5 +1,25 @@
 :80 {
-    reverse_proxy ticket-purchase:3001 {
-        lb_policy round_robin
+    handle /events* {
+        reverse_proxy event-catalogue:3003 {
+            lb_policy round_robin
+        }
+    }
+
+    handle /pay {
+        reverse_proxy payment-service:3000 {
+            lb_policy round_robin
+        }
+    }
+
+    handle /payment* {
+        reverse_proxy payment-service:3000 {
+            lb_policy round_robin
+        }
+    }
+
+    handle {
+        reverse_proxy ticket-purchase:3001 {
+            lb_policy round_robin
+        }
     }
 }

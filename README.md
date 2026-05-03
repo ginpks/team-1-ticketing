@@ -22,14 +22,17 @@
 ## How to Start the System
 
 ```bash
-# Start everything (builds images on first run)
+# Start everything with Sprint 4 service replicas
 docker compose up --build
 
-# Start with service replicas (Sprint 4)
-docker compose up --scale your-service=3
+# Equivalent explicit scale command for verification
+docker compose up --build --scale payment-service=3 --scale ticket-purchase=3 --scale event-catalogue=3
 
 # Verify all services are healthy
 docker compose ps
+
+# Check the replicated services specifically
+docker compose ps payment-service ticket-purchase event-catalogue
 
 # Stream logs
 docker compose logs -f
@@ -41,14 +44,19 @@ docker compose exec holmes bash
 ### Base URLs (development)
 
 ```
-[your-service-name]    http://localhost:[port]
-[your-service-name]    http://localhost:[port]
-[worker-name]          http://localhost:[port]   (health endpoint only)
+caddy                 http://localhost:8080
+ticket-purchase       http://localhost:8080
+event-catalogue       http://localhost:8080/events
+payment-service       http://localhost:8080/pay
+[worker-name]         http://localhost:[port]   (health endpoint only)
 holmes                 (no port — access via exec)
 ```
 
 > From inside holmes, services are reachable by name:
-> `curl http://your-service:3000/health`
+> `curl http://ticket-purchase:3001/health`
+>
+> To verify Caddy routing from holmes:
+> `for i in $(seq 1 20); do curl -s http://caddy:80/health; done`
 >
 > See [holmes/README.md](holmes/README.md) for a full tool reference.
 

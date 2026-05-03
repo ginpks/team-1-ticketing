@@ -51,10 +51,9 @@ services:
     build:
       context: ./services/payment-service
       dockerfile: Dockerfile
-    container_name: payment-service
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    deploy:
+      replicas: 3
     networks:
       - team-net
     environment:
@@ -79,6 +78,8 @@ services:
       context: ./services/ticket-purchase
       dockerfile: Dockerfile
     restart: unless-stopped
+    deploy:
+      replicas: 3
     networks:
       - team-net
     environment:
@@ -114,6 +115,10 @@ services:
       - team-net
     depends_on:
       ticket-purchase:
+        condition: service_healthy
+      event-catalogue:
+        condition: service_healthy
+      payment-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
@@ -176,10 +181,9 @@ services:
     build:
       context: ./services/event-catalogue
       dockerfile: Dockerfile
-    container_name: event-catalogue
     restart: unless-stopped
-    ports:
-      - "3003:3003"
+    deploy:
+      replicas: 3
     networks:
       - team-net
     environment:
