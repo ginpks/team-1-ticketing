@@ -1,19 +1,55 @@
 import { createClient } from "redis";
 import { Pool } from "pg";
+import express from "express";
 
 const url = process.env.PURCHASE_DATABASE_URL;
+const app = express();
 
 export const purchasePool = new Pool({
   connectionString: url,
 });
 
+const PORT = 4003;
+
 const client = createClient({
   url: process.env.REDIS_URL || "redis://redis:6379",
 });
+
+const healthClient = createClient({
+  url: process.env.REDIS_URL || "redis://redis:6379",
+});
+
 await client.connect();
+await healthClient.connect();
 
 const WAITLIST_QUEUE = "waitlist-queue";
 const DLQ = "waitlist:dlq";
+let lastJobAt;
+let jobsProcessed = 0;
+
+app.get("/health", async (_req, res) => {
+  const dlqDepth = await healthClient.lLen(DLQ);
+  const depth = await healthClient.lLen(WAITLIST_QUEUE);
+
+  try {
+    res.json({
+      redis: "healthy",
+      queue: {
+        status: "degraded",
+        depth: depth,
+        dlq_depth: dlqDepth,
+      },
+      last_job_at: lastJobAt,
+      jobs_processed: jobsProcessed,
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Health check failed" });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`waitlist health check is at port ${PORT}`);
+});
 
 function validateJob(job) {
   const errors = [];
@@ -116,6 +152,8 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
     await client.lPush(queueKey, nextRaw.element);
     throw err;
   } finally {
+    lastJobAt = new Date().toISOString();
+    jobsProcessed++;
     db.release();
   }
 }
