@@ -111,6 +111,17 @@ app.get("/events", async (_req, res) => {
   try {
     const cached = await client.get("events:all");
     if (cached) {
+      const events = JSON.parse(cached);
+      for (const event of events) {
+        await client.lPush(
+          "event-catalog:browsed",
+          JSON.stringify({
+            event: event.name,
+            browsed_count: 1,
+            peak_hour_browsed: new Date().toISOString(),
+          }),
+        );
+      }
       return res.status(200).json(JSON.parse(cached));
     }
 
@@ -154,6 +165,14 @@ app.get("/events/:event_name", async (req, res) => {
 
     const cached = await client.get(`events:${event_id}`);
     if (cached) {
+      await client.lPush(
+        "event-catalog:browsed",
+        JSON.stringify({
+          event: event_name,
+          browsed_count: 1,
+          peak_hour_browsed: new Date().toISOString(),
+        }),
+      );
       return res.status(200).json(JSON.parse(cached));
     }
     const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
