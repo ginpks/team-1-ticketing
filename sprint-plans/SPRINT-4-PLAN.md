@@ -46,7 +46,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 - [x] Analytics browse tracking in Event Catalog — pushes to event-catalog:browsed queue on GET /events and GET /events/:event_name, fires on both cache hit and miss
 - [x] Analytics worker browse consumer — consumes event-catalog:browsed queue, increments browsed_count per event
 - [x] Analytics worker purchase tracking — increments tickets_sold and revenue per confirmed purchase
-- [x] True peak hour calculation — add analytics_hourly table, compute peak hour from purchase history instead of last-write
+- [x] Peak hour calculation — add analytics_hourly table, compute peak hour from purchase history instead of last-write
 
 ### Aryan Vakil
 
