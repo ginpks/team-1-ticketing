@@ -39,7 +39,10 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
   console.log(event);
 
   const nextRaw = await client.blPop(queueKey, 1);
-  if (!nextRaw) return null;
+  if (!nextRaw) {
+    await client.publish("seat:released", JSON.stringify({ event, seat }));
+    return null;
+  }
 
   let nextUser;
   try {
