@@ -42,11 +42,11 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Vihaan Sejwani
 
-- [x] Event Catalog name-based routing — all routes accept event/seat names, resolveIds() handles UUID resolution internally
-- [x] Analytics browse tracking in Event Catalog — pushes to event-catalog:browsed queue on GET /events and GET /events/:event_name, fires on both cache hit and miss
-- [x] Analytics worker browse consumer — consumes event-catalog:browsed queue, increments browsed_count per event
-- [x] Analytics worker purchase tracking — increments tickets_sold and revenue per confirmed purchase
-- [x] Peak hour calculation — add analytics_hourly table, compute peak hour from purchase history instead of last-write
+- [x] Have to change Event Catalog to name based routing
+- [x] To implement Analytics browse tracking in Event Catalog, pushes to event-catalog:browsed queue on GET/events and GET/events/:event_name
+- [x] To implement Analytics worker browse consumer and consumes event-catalog:browsed queue, increments browsed_count per event
+- [x] To implement Analytics worker purchase tracking and increments tickets_sold and revenue per confirmed purchase
+- [x] To implement True peak hour calculation. To add analytics_hourly table, compute peak hour from purchase history
 
 ### Aryan Vakil
 
