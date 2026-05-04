@@ -48,6 +48,14 @@ const ensureAnalyticsTable = async () => {
   );
 
   await pool.query(
+    `CREATE TABLE IF NOT EXISTS processed_browse_events (
+    id SERIAL PRIMARY KEY,
+    event TEXT NOT NULL,
+    browsed_at TIMESTAMP NOT NULL
+  )`,
+  );
+
+  await pool.query(
     `WITH event_totals AS (
    SELECT
      event,
@@ -163,6 +171,21 @@ const recordPurchaseConfirmed = async (purchase) => {
       [purchase.event, confirmedAt.toISOString(), amount],
     );
 
+    const peakHour = await client.query(
+      `SELECT date_trunc('hour', confirmed_at) AS hour, COUNT(*) 
+   FROM processed_purchase_confirmations
+   WHERE event = $1
+   GROUP BY hour
+   ORDER BY count DESC
+   LIMIT 1`,
+      [purchase.event],
+    );
+
+    await client.query(
+      `UPDATE analytics SET ticket_purchase_peak_hour = $1 WHERE event = $2`,
+      [peakHour.rows[0].hour, purchase.event],
+    );
+
     await client.query("COMMIT");
     return true;
   } catch (err) {
@@ -239,13 +262,34 @@ const recordEventBrowseAnalytics = async ({
   peakHourBrowsed,
 }) => {
   await pool.query(
+    `INSERT INTO processed_browse_events (event, browsed_at)
+     VALUES ($1, $2)`,
+    [event, peakHourBrowsed.toISOString()],
+  );
+
+  await pool.query(
     `INSERT INTO analytics (event, browse_peak_hour, browsed_count)
- VALUES ($1, date_trunc('hour', $2::timestamp), $3)
- ON CONFLICT (event)
- DO UPDATE SET
-   browse_peak_hour = date_trunc('hour', $2::timestamp),
-   browsed_count = analytics.browsed_count + $3`,
+     VALUES ($1, date_trunc('hour', $2::timestamp), $3)
+     ON CONFLICT (event)
+     DO UPDATE SET
+       browse_peak_hour = date_trunc('hour', $2::timestamp),
+       browsed_count = analytics.browsed_count + $3`,
     [event, peakHourBrowsed.toISOString(), browsedCount],
+  );
+
+  const browsePeakHour = await pool.query(
+    `SELECT date_trunc('hour', browsed_at) AS hour, COUNT(*)
+     FROM processed_browse_events
+     WHERE event = $1
+     GROUP BY hour
+     ORDER BY count DESC
+     LIMIT 1`,
+    [event],
+  );
+
+  await pool.query(
+    `UPDATE analytics SET browse_peak_hour = $1 WHERE event = $2`,
+    [browsePeakHour.rows[0].hour, event],
   );
 };
 

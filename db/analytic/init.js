@@ -21,6 +21,11 @@ const init = async () => {
   event TEXT NOT NULL,
   confirmed_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`);
+    await analyticPool.query(`CREATE TABLE IF NOT EXISTS processed_browse_events (
+  id SERIAL PRIMARY KEY,
+  event TEXT NOT NULL,
+  browsed_at TIMESTAMP NOT NULL
+);`);
     await analyticPool.query(`
   WITH event_totals AS (
     SELECT

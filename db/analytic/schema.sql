@@ -13,3 +13,9 @@ CREATE TABLE IF NOT EXISTS processed_purchase_confirmations (
   event TEXT NOT NULL,
   confirmed_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS processed_browse_events (
+  id SERIAL PRIMARY KEY,
+  event TEXT NOT NULL,
+  browsed_at TIMESTAMP NOT NULL
+);
