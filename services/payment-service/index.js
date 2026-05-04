@@ -1,4 +1,5 @@
 const express = require("express");
+const os = require("os");
 const { Pool } = require("pg");
 const { createClient } = require("redis");
  
@@ -7,7 +8,14 @@ app.use(express.json());
  
 const PORT = Number(process.env.PORT) || 3000;
 const SERVICE_NAME = process.env.SERVICE_NAME || "payment-service";
+const REPLICA_ID = os.hostname();
 const startTime = Date.now();
+
+app.use((req, res, next) => {
+  res.setHeader("X-Replica-Id", REPLICA_ID);
+  console.log(`[${SERVICE_NAME}] replica ${REPLICA_ID} handled ${req.method} ${req.originalUrl}`);
+  next();
+});
  
 // ── Postgres ──────────────────────────────────────────────────────────────────
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });

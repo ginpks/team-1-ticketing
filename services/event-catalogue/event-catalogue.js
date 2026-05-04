@@ -1,4 +1,5 @@
 import express from "express";
+import os from "os";
 import redis from "redis";
 import pkg from "pg";
 
@@ -7,6 +8,7 @@ const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3003;
 const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
+const replicaId = os.hostname();
 const client = redis.createClient({ url: redisUrl });
 const subscriber = redis.createClient({ url: redisUrl });
 
@@ -31,6 +33,11 @@ async function resolveIds(eventName, seatName) {
 }
 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader("X-Replica-Id", replicaId);
+  console.log(`[event-catalogue] replica ${replicaId} handled ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 client.on("error", (err) => {
   console.error("Client Redis error:", err.message);
