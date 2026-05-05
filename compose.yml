@@ -117,7 +117,7 @@ services:
       payment-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
