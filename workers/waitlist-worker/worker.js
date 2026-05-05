@@ -74,8 +74,11 @@ async function promoteNextUser({ event, seat, startTime, endTime }) {
   const queueKey = `waitlist:${event}`;
   console.log(event);
 
-  const nextRaw = await client.blPop(queueKey, 0);
-  if (!nextRaw) return null;
+  const nextRaw = await client.blPop(queueKey, 1);
+  if (!nextRaw) {
+    await client.publish("seat:released", JSON.stringify({ event, seat }));
+    return null;
+  }
 
   let nextUser;
   try {

@@ -19,13 +19,14 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 | Team Member    | Files / Directories Owned This Sprint                       |
 | -------------- | ----------------------------------------------------------- |
 | Arkar Myint    | `services/refund-service/`                                  |
-| Vihaan Sejwani | `services/event-catalog/`, `services/ticket-purchase/`      |
+| Vihaan Sejwani | `services/event-catalog/`, `workers/analytics-worker/`      |
 | Aryan Vakil    | `db/refund/`                                                |
 | Tun Lin Naine  | `workers/waitlist-worker`                                   |
 | Din Masic      | `services/ticket-purchase/`                                 |
-| Gin Park       | `workers/analytics-worker/`, `compose.yml`                                 |
+| Gin Park       | `workers/analytics-worker/`, `compose.yml`                  |
 | Mark Gallant   | `k6/`                                                       |
 | Sidharth Jain  | `services/notification-worker/`, `Caddyfile`, `compose.yml` |
+
 ---
 
 ## Tasks
@@ -41,11 +42,11 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Vihaan Sejwani
 
-- [] Implement statistic tracking in `event-catalog` service pushing to the `analytic-browse` queue
-- [x] Implement `ticket-purchase` service checking `event-catalog` for seat availability
-- [x] Create a seat availability route in `event-catalog` so the `ticket-purchase` can use it to check the seat availability.
-- [x] Implement `event-catalog` subscribing to `purchase:confirmed` redis pub sub to update the availabilty of the seats.
-- [x] Implement `event-catalog` subscribing to `seat:released` redis pub sub to update the availabilty of the seats.
+- [x] Have to change Event Catalog to name based routing
+- [x] To implement Analytics browse tracking in Event Catalog, pushes to event-catalog:browsed queue on GET/events and GET/events/:event_name
+- [x] To implement Analytics worker browse consumer and consumes event-catalog:browsed queue, increments browsed_count per event
+- [x] To implement Analytics worker purchase tracking and increments tickets_sold and revenue per confirmed purchase
+- [x] To implement True peak hour calculation. To add analytics_hourly table, compute peak hour from purchase history
 
 ### Aryan Vakil
 
@@ -83,6 +84,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 ---
 
 ## Risks
+
 - Merge conflicts could arise if mutliple members share a single service implemnentation. Careful planning and a structured git workflow is imperative.
 
 ---

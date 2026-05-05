@@ -35,7 +35,9 @@ async function resolveIds(eventName, seatName) {
 app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("X-Replica-Id", replicaId);
-  console.log(`[event-catalogue] replica ${replicaId} handled ${req.method} ${req.originalUrl}`);
+  console.log(
+    `[event-catalogue] replica ${replicaId} handled ${req.method} ${req.originalUrl}`,
+  );
   next();
 });
 
@@ -109,12 +111,34 @@ app.get("/events", async (_req, res) => {
   try {
     const cached = await client.get("events:all");
     if (cached) {
+      const events = JSON.parse(cached);
+      for (const event of events) {
+        await client.lPush(
+          "event-catalog:browsed",
+          JSON.stringify({
+            event: event.name,
+            browsed_count: 1,
+            peak_hour_browsed: new Date().toISOString(),
+          }),
+        );
+      }
       return res.status(200).json(JSON.parse(cached));
     }
 
     const result = await pool.query("SELECT * FROM events");
 
     await client.setEx("events:all", 60, JSON.stringify(result.rows));
+
+    for (const event of result.rows) {
+      await client.lPush(
+        "event-catalog:browsed",
+        JSON.stringify({
+          event: event.name,
+          browsed_count: 1,
+          peak_hour_browsed: new Date().toISOString(),
+        }),
+      );
+    }
 
     // Did not put a check for empty array, that is not an error.
     return res.status(200).json(result.rows);
@@ -141,6 +165,14 @@ app.get("/events/:event_name", async (req, res) => {
 
     const cached = await client.get(`events:${event_id}`);
     if (cached) {
+      await client.lPush(
+        "event-catalog:browsed",
+        JSON.stringify({
+          event: event_name,
+          browsed_count: 1,
+          peak_hour_browsed: new Date().toISOString(),
+        }),
+      );
       return res.status(200).json(JSON.parse(cached));
     }
     const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
@@ -158,6 +190,16 @@ app.get("/events/:event_name", async (req, res) => {
       60,
       JSON.stringify(responseObject),
     );
+
+    await client.lPush(
+      "event-catalog:browsed",
+      JSON.stringify({
+        event: event_name,
+        browsed_count: 1,
+        peak_hour_browsed: new Date().toISOString(),
+      }),
+    );
+
     res.status(200).json(responseObject);
   } catch (err) {
     console.error("Error fetching event:", err.message);
