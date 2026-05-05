@@ -25,7 +25,7 @@
 | Din            | Fraud DB, Fraud Detection Worker                                                                                                                                                                                                                                  | [PR #40](https://github.com/ginpks/team-1-ticketing/pull/40)                                                                                                                                                                                                                |
 | Gin Park       | Service replication | https://github.com/ginpks/team-1-ticketing/pull/47 |
 | Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
-| Arkar Myint | Built `k6/sprint-4-scale.js` and `k6/sprint-4-replica.js` — scaling comparison test and replica failure test hitting GET /events through Caddy. Ran and validated both tests with 3 replicas. | [PR #52](https://github.com/ginpks/team-1-ticketing/pull/52) |
+| Arkar Myint | Built `k6/sprint-4-scale.js` and `k6/sprint-4-replica.js`, scaling comparison test and replica failure test hitting GET /events through Caddy. Ran and validated both tests with 3 replicas. | [PR #52](https://github.com/ginpks/team-1-ticketing/pull/52) |
 
 ---
 
@@ -112,8 +112,9 @@ After restart — `docker compose ps`:
 team-1-ticketing-ticket-purchase-1   Up (healthy)   3000/tcp
 team-1-ticketing-ticket-purchase-2   Up (healthy)   3000/tcp
 team-1-ticketing-ticket-purchase-3   Up (healthy)   3000/tcp
-```
+
 Zero failed requests throughout the entire test including during the replica failure window. Caddy automatically stopped routing to the stopped replica and redistributed traffic to the remaining two. When the replica restarted, traffic redistributed back to all three.
+```
 ---
 
 ## Blockers and Lessons Learned
