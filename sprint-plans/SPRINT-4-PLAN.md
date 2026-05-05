@@ -18,7 +18,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 | Team Member    | Files / Directories Owned This Sprint                       |
 | -------------- | ----------------------------------------------------------- |
-| Arkar Myint    | `services/refund-service/`                                  |
+| Arkar Myint | `k6/sprint-4-scale.js`, `k6/sprint-4-replica.js` |
 | Vihaan Sejwani | `services/event-catalog/`, `workers/analytics-worker/`      |
 | Aryan Vakil    | `db/refund/`                                                |
 | Tun Lin Naine  | `workers/waitlist-worker`                                   |
@@ -33,12 +33,9 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Arkar Myint
 
-- [ ] Build `services/refund-service/` with `POST /refunds` idempotent endpoint
-- [ ] Validate purchase exists via sync call to Ticket Purchase
-- [ ] Call Payment Service synchronously to reverse charge
-- [ ] Push to `waitlist-queue` on successful refund
-- [ ] Implement `GET /health` endpoint
-- [ ] Add to `compose.yml` with healthcheck
+- [x] Built `k6/sprint-4-scale.js` — scaling comparison test hitting GET /events through Caddy
+- [x] Built `k6/sprint-4-replica.js` — replica failure test with sustained traffic and mid-test replica stop
+- [x] Ran and validated both tests with 3 ticket-purchase replicas behind Caddy
 
 ### Vihaan Sejwani
 
