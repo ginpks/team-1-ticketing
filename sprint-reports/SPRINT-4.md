@@ -1,4 +1,4 @@
-# Sprint 4 Report — [Team Name]
+# Sprint 4 Report — Team 1
 
 **Sprint:** 4 — Replication, Scaling, and Polish  
 **Tag:** `sprint-4`  
@@ -9,40 +9,50 @@
 ## What We Built
 
 [Which services are replicated? How does load balancing work? What polish work was completed?]
-
+- The event catalogue, ticket-purhcase, and payment services were replicated.
+- Docker creates multiple containers for each scalable service. The service name resolves to multiple container IPs. Caddy refreshes that list every 5 seconds and sends requests across those replicas using round-robin.
 ---
 
 ## Individual Contributions
 
 | Team Member | What They Delivered | Key Commits |
 | ----------- | ------------------- | ----------- |
-| [Name]      | | |
-| [Name]      | | |
-| [Name]      | | |
+| Tun Lin Naine  | waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/39|
+| Aryan          | Created refund db and storeRefund logic | [PR #37](https://github.com/ginpks/team-1-ticketing/pull/37) |
+| Vihaan Sejwani | Added seat availability checking route in `event-catalogue` service, modified the post purchase route in `ticket-purchase` service to use it, subscribed `event-catalogue ` service to `purchases:confirmed` and `seat:released` queues from redis to update seat status in the database accordingly.                                                                                                        | [PR #43](https://github.com/ginpks/team-1-ticketing/pull/43)                                                                                                                                                                                                                |
+| Mark Gallant   | Implemented poison pill k6 test and helper scripts to send bad data to the redis queue | [PR #44](https://github.com/ginpks/team-1-ticketing/pull/44)                                                                                                                                                                                                                                   | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
+| Din            | Fraud DB, Fraud Detection Worker                                                                                                                                                                                                                                  | [PR #40](https://github.com/ginpks/team-1-ticketing/pull/40)                                                                                                                                                                                                                |
+| Gin Park       | Service replication | https://github.com/ginpks/team-1-ticketing/pull/47 |
+| Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
+| Arkar Myint | Built `services/refund-service/` — `POST /refunds` idempotent endpoint that validates purchase exists via sync call to ticket-purchase, calls payment service to reverse charge, and pushes to waitlist-queue on success. `GET /health` checks Postgres and Redis. | [PR #38](https://github.com/ginpks/team-1-ticketing/pull/38) |
 
 ---
 
 ## Starting the System with Replicas
 
 ```bash
-docker compose up --scale [service-name]=3 --scale [other-service]=2
+docker compose up --scale payment-service=3 --scale ticket-purchase=3 --scale event-catalogue=3 --build
 ```
 
 After startup:
 
 ```
-[Paste docker compose ps output here showing all replicas as (healthy)]
+team-1-ticketing-ticket-purchase-1   team-1-ticketing-ticket-purchase   "docker-entrypoint.s…"   ticket-purchase   54 seconds ago   Up 34 seconds (healthy)   3000/tcp
+team-1-ticketing-ticket-purchase-2   team-1-ticketing-ticket-purchase   "docker-entrypoint.s…"   ticket-purchase   54 seconds ago   Up 35 seconds (healthy)   3000/tcp
+team-1-ticketing-ticket-purchase-3   team-1-ticketing-ticket-purchase   "docker-entrypoint.s…"   ticket-purchase   54 seconds ago   Up 34 seconds (healthy)   3000/tcp`
+
+
 ```
 
 ---
 
 ## What Is Working
 
-- [ ] At least [N] services replicated via `--scale`
-- [ ] Load balancer distributes traffic across replicas (visible in logs)
-- [ ] Services are stateless — multiple instances run without conflicts
-- [ ] `docker compose ps` shows all replicas as `(healthy)`
-- [ ] System is fully complete for team size
+- [x] At least [N] services replicated via `--scale`
+- [x] Load balancer distributes traffic across replicas (visible in logs)
+- [x] Services are stateless — multiple instances run without conflicts
+- [x] `docker compose ps` shows all replicas as `(healthy)`
+- [x] System is fully complete for team size
 
 ---
 
