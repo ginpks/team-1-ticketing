@@ -2,7 +2,7 @@
 
 **Sprint:** 4 — Replication, Scaling, and Polish  
 **Tag:** `sprint-4`  
-**Submitted:** [date, before 05.05 class]
+**Submitted:** [5-06-2026]
 
 ---
 
@@ -21,7 +21,7 @@
 | Tun Lin Naine  | waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/39|
 | Aryan          | Refactor code base | [PR #46](https://github.com/ginpks/team-1-ticketing/pull/46), [PR #47](https://github.com/ginpks/team-1-ticketing/pull/47), [PR #55](https://github.com/ginpks/team-1-ticketing/pull/55) |
 | Vihaan Sejwani | Implemented Event Catalog pushing analytics for the analytics worker. Fixed analytics worker to consume correctly from Event Catalog and from the purchase:confirmed pub sub. Implemented correct peak hour calculation.                                                                                                         | [PR #54](https://github.com/ginpks/team-1-ticketing/pull/54)                                                                                                                                                                                                                |
-| Mark Gallant   | Implemented poison pill k6 test and helper scripts to send bad data to the redis queue | [PR #44](https://github.com/ginpks/team-1-ticketing/pull/44)                                                                                                                                                                                                                                   | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
+| Mark Gallant   | Reviewed PRs and helped finalize project. Contributed to demo day script / cheat sheet in the k6 and poison pill sections. |   n/a                                                                                                                                                                                                                               | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Fraud DB, Fraud Detection Worker                                                                                                                                                                                                                                  | [PR #40](https://github.com/ginpks/team-1-ticketing/pull/40)                                                                                                                                                                                                                |
 | Gin Park       | Service replication | https://github.com/ginpks/team-1-ticketing/pull/47 |
 | Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
