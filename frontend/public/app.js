@@ -271,7 +271,7 @@ async function submitPurchase() {
     return;
   }
 
-  const purchaseId = data.id;
+  const purchaseId = data.purchase?.id ?? data.id;
 
   setPipeline([
     { label: 'Submitted',  detail: `ID: ${purchaseId}`,       state: 'done'   },
@@ -294,7 +294,7 @@ async function submitPurchase() {
         { label: 'Submitted',  detail: `ID: ${purchaseId}`,         state: 'done' },
         { label: 'Queued',     detail: 'Dequeued by worker',         state: 'done' },
         { label: 'Payment',    detail: 'Charged successfully',       state: 'done' },
-        { label: 'Confirmed',  detail: `${timeSince(pd.updated_at)}`,state: 'done' },
+        { label: 'Confirmed',  detail: `${timeSince(pd.created_at)}`,state: 'done' },
       ]);
       setResult('ok', [`✓ Purchase confirmed`, `ID: ${purchaseId}`, `Amount: $${pd.amount}`].join('\n'));
       regenerateKey();

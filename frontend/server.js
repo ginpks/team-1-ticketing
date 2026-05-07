@@ -20,16 +20,16 @@ const DIRECT = {
 };
 
 const HEALTH_SERVICES = [
-  { key: 'ticket-purchase',       label: 'Ticket Purchase',      url: CADDY,                        type: 'service' },
-  { key: 'event-catalogue',       label: 'Event Catalogue',      url: `${CADDY}/events`,             type: 'service', healthPath: '/health' },
-  { key: 'payment-service',       label: 'Payment Service',      url: `${CADDY}/payment`,            type: 'service', healthPath: '/health' },
-  { key: 'notification-service',  label: 'Notification Service', url: DIRECT.notificationSvc,       type: 'service' },
-  { key: 'refund-service',        label: 'Refund Service',       url: DIRECT.refund,                type: 'service' },
-  { key: 'ticket-worker',         label: 'Ticket Worker',        url: DIRECT.ticketWorker,          type: 'worker'  },
-  { key: 'notification-worker',   label: 'Notification Worker',  url: DIRECT.notificationWorker,    type: 'worker'  },
-  { key: 'analytics-worker',      label: 'Analytics Worker',     url: DIRECT.analyticsWorker,       type: 'worker'  },
-  { key: 'fraud-worker',          label: 'Fraud Worker',         url: DIRECT.fraudWorker,           type: 'worker'  },
-  { key: 'waitlist-worker',       label: 'Waitlist Worker',      url: DIRECT.waitlistWorker,        type: 'worker'  },
+  { key: 'ticket-purchase',       label: 'Ticket Purchase',      url: 'http://ticket-purchase:3001', type: 'service' },
+  { key: 'event-catalogue',       label: 'Event Catalogue',      url: 'http://event-catalogue:3003', type: 'service' },
+  { key: 'payment-service',       label: 'Payment Service',      url: 'http://payment-service:3000', type: 'service' },
+  { key: 'notification-service',  label: 'Notification Service', url: DIRECT.notificationSvc,        type: 'service' },
+  { key: 'refund-service',        label: 'Refund Service',       url: DIRECT.refund,                 type: 'service' },
+  { key: 'ticket-worker',         label: 'Ticket Worker',        url: DIRECT.ticketWorker,           type: 'worker'  },
+  { key: 'notification-worker',   label: 'Notification Worker',  url: DIRECT.notificationWorker,     type: 'worker'  },
+  { key: 'analytics-worker',      label: 'Analytics Worker',     url: DIRECT.analyticsWorker,        type: 'worker'  },
+  { key: 'fraud-worker',          label: 'Fraud Worker',         url: DIRECT.fraudWorker,            type: 'worker'  },
+  { key: 'waitlist-worker',       label: 'Waitlist Worker',      url: DIRECT.waitlistWorker,         type: 'worker'  },
 ];
 
 async function pfetch(url, opts = {}) {
