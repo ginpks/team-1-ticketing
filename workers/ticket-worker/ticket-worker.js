@@ -97,7 +97,7 @@ async function processJob(job) {
       const paymentResponse = await fetch(`${PAYMENT_SERVICE_URL}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, purchaseId }),
       });
       const paymentData = await paymentResponse.json();
       if (paymentResponse.ok && paymentData.status === "success") {
