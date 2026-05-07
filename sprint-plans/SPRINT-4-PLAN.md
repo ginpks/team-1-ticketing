@@ -47,7 +47,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Aryan Vakil
 
-- [ ] Create db for refund service
+- [x] Create db for refund service
 
 ### Tun Lin Naine
 

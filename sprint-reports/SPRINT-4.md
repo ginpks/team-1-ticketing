@@ -18,7 +18,7 @@
 
 | Team Member | What They Delivered | Key Commits |
 | ----------- | ------------------- | ----------- |
-| Tun Lin Naine  | waitlist worker | https://github.com/ginpks/team-1-ticketing/pull/39|
+| Tun Lin Naine  | waitlist dlq endpoint | https://github.com/ginpks/team-1-ticketing/pull/51/changes, https://github.com/ginpks/team-1-ticketing/pull/53|
 | Aryan          | Refactor code base | [PR #46](https://github.com/ginpks/team-1-ticketing/pull/46), [PR #47](https://github.com/ginpks/team-1-ticketing/pull/47), [PR #55](https://github.com/ginpks/team-1-ticketing/pull/55) |
 | Vihaan Sejwani | Implemented Event Catalog pushing analytics for the analytics worker. Fixed analytics worker to consume correctly from Event Catalog and from the purchase:confirmed pub sub. Implemented correct peak hour calculation.                                                                                                         | [PR #54](https://github.com/ginpks/team-1-ticketing/pull/54)                                                                                                                                                                                                                |
 | Mark Gallant   | Reviewed PRs and helped finalize project. Contributed to demo day script / cheat sheet in the k6 and poison pill sections. |   n/a                                                                                                                                                                                                                               | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
@@ -82,7 +82,51 @@ The improvement from single to 3 replicas was modest at this load level. p50 dro
 Timeline:
 
 | Time | Event |
-| ---- | ----- |
+| ---- | ----- |:80 {
+    handle /events* {
+        reverse_proxy {
+            dynamic a event-catalogue 3003 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle /pay {
+        reverse_proxy {
+            dynamic a payment-service 3000 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle /payment* {
+        reverse_proxy {
+            dynamic a payment-service 3000 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle {
+        reverse_proxy {
+            dynamic a ticket-purchase 3001 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+}
 | 0s   | k6 started, 3 replicas running |
 | ~40s | Killed replica: `docker stop team-1-ticketing-ticket-purchase-2` |
 | ~40s | Surviving replicas (1 and 3) absorbed all traffic |
