@@ -71,10 +71,17 @@ app.post("/pay", async (req, res) => {
   const { purchaseId, amount } = req.body;
  
   // ── Validate ───────────────────────────────────────────────────────────────
-  if (amount == null) {
+  if (amount == null || purchaseId == null) {
     return res.status(400).json({
       status: "failure",
       error: "purchaseId and amount are required",
+    });
+  }
+
+  if (!Number.isInteger(purchaseId) || purchaseId <= 0) {
+    return res.status(400).json({
+      status: "failure",
+      error: "Invalid purchase ID"
     });
   }
  
