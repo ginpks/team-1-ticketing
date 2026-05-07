@@ -9,15 +9,19 @@ const PORT = Number(process.env.PORT) || 3007;
 const SERVICE_NAME = "refund-service";
 const startTime = Date.now();
 
-const TICKET_PURCHASE_URL = process.env.TICKET_PURCHASE_URL || "http://ticket-purchase:3001";
-const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || "http://payment-service:3000";
+const TICKET_PURCHASE_URL =
+  process.env.TICKET_PURCHASE_URL || "http://ticket-purchase:3001";
+const PAYMENT_SERVICE_URL =
+  process.env.PAYMENT_SERVICE_URL || "http://payment-service:3000";
 const WAITLIST_QUEUE = process.env.WAITLIST_QUEUE || "waitlist-queue";
 
 // ── Postgres ──────────────────────────────────────────────────────────────────
 const pool = new Pool({ connectionString: process.env.REFUND_DATABASE_URL });
 
 // ── Redis ─────────────────────────────────────────────────────────────────────
-const redisClient = createClient({ url: process.env.REDIS_URL || "redis://redis:6379" });
+const redisClient = createClient({
+  url: process.env.REDIS_URL || "redis://redis:6379",
+});
 redisClient.on("error", (err) => console.error("Redis error:", err.message));
 
 // ── GET /health ───────────────────────────────────────────────────────────────
@@ -55,7 +59,15 @@ app.get("/health", async (_req, res) => {
 
 // ── POST /refunds ─────────────────────────────────────────────────────────────
 app.post("/refunds", async (req, res) => {
-  const { purchase_id, amount, idempotency_key, event, seat, start_time, end_time } = req.body;
+  const {
+    purchase_id,
+    amount,
+    idempotency_key,
+    event,
+    seat,
+    start_time,
+    end_time,
+  } = req.body;
 
   // ── Validate ───────────────────────────────────────────────────────────────
   if (!purchase_id || !amount || !idempotency_key) {
@@ -68,7 +80,7 @@ app.post("/refunds", async (req, res) => {
     // ── Idempotency check ──────────────────────────────────────────────────
     const existing = await pool.query(
       "SELECT id, status FROM refunds WHERE idempotency_key = $1",
-      [idempotency_key]
+      [idempotency_key],
     );
     if (existing.rows.length > 0) {
       return res.status(200).json({
@@ -79,7 +91,9 @@ app.post("/refunds", async (req, res) => {
     }
 
     // ── Validate purchase exists via sync call to Ticket Purchase ──────────
-    const purchaseRes = await fetch(`${TICKET_PURCHASE_URL}/purchases/${purchase_id}`);
+    const purchaseRes = await fetch(
+      `${TICKET_PURCHASE_URL}/purchases/${purchase_id}`,
+    );
     if (!purchaseRes.ok) {
       return res.status(404).json({ error: "Purchase not found" });
     }
@@ -88,7 +102,7 @@ app.post("/refunds", async (req, res) => {
     const refundData = await pool.query(
       `INSERT INTO refunds (purchase_id, amount, status, idempotency_key)
        VALUES ($1, $2, 'pending', $3) RETURNING id`,
-      [purchase_id, amount, idempotency_key]
+      [purchase_id, amount, idempotency_key],
     );
     const refundId = refundData.rows[0].id;
 
@@ -101,32 +115,38 @@ app.post("/refunds", async (req, res) => {
     const paymentData = await paymentRes.json();
 
     // ── Update refund status ───────────────────────────────────────────────
-    const refundStatus = paymentData.status === "success" ? "completed" : "failed";
+    const refundStatus =
+      paymentData.status === "success" ? "completed" : "failed";
     await pool.query(
       "UPDATE refunds SET status = $1, updated_at = NOW() WHERE id = $2",
-      [refundStatus, refundId]
+      [refundStatus, refundId],
     );
 
     // ── Push to waitlist queue on success ──────────────────────────────────
     if (refundStatus === "completed") {
-      await redisClient.lPush(WAITLIST_QUEUE, JSON.stringify({
-        id: purchase_id,
-        event,
-        seat,
-        startTime: start_time,
-        endTime: end_time,
-        amount,
-        idempotencyKey: idempotency_key,
-        status: "cancel",
-      }));
-      console.log(JSON.stringify({
-        event: "refund_processed",
-        refundId,
-        purchase_id,
-        amount,
-        status: refundStatus,
-        timestamp: new Date().toISOString(),
-      }));
+      await redisClient.lPush(
+        WAITLIST_QUEUE,
+        JSON.stringify({
+          purchaseId: purchase_id,
+          event,
+          seat,
+          startTime: start_time,
+          endTime: end_time,
+          amount,
+          idempotency_key: idempotency_key,
+          status: "cancel",
+        }),
+      );
+      console.log(
+        JSON.stringify({
+          event: "refund_processed",
+          refundId,
+          purchase_id,
+          amount,
+          status: refundStatus,
+          timestamp: new Date().toISOString(),
+        }),
+      );
     }
 
     return res.status(201).json({
@@ -136,7 +156,6 @@ app.post("/refunds", async (req, res) => {
       status: refundStatus,
       duplicate: false,
     });
-
   } catch (err) {
     console.error("Refund error:", err.message);
     return res.status(500).json({ error: "Failed to process refund" });
