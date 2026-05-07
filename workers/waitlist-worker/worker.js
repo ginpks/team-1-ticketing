@@ -63,7 +63,7 @@ function validateJob(job) {
     errors.push("missing/invalid amount");
 
   // FIX 4: Validate job.id when status is cancel or failed
-  if ((job.status === "cancel" || job.status === "failed") && job.purchaseId == null) {
+  if ((job.status === "cancel" || job.status === "failed") && job.id == null) {
     errors.push("missing id for cancel/failed job");
   }
 
@@ -201,7 +201,7 @@ while (true) {
 
   const purchase = pu.rows[0];
   const reservation = re.rows[0];
-  const status = job.status;
+  const status = purchase.status;
   const startTime = reservation.start_time;
   const endTime = reservation.end_time;
 
