@@ -36,6 +36,17 @@
         }
     }
 
+    handle /refunds* {
+        reverse_proxy {
+            dynamic a refund-service 3007 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
     handle {
         reverse_proxy {
             dynamic a ticket-purchase 3001 {
