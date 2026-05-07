@@ -11,8 +11,9 @@ const init = async () => {
   id SERIAL PRIMARY KEY,
   event TEXT NOT NULL UNIQUE,
   tickets_sold INT NOT NULL DEFAULT 0,
-  peak_hour TIMESTAMP NOT NULL,
+  ticket_purchase_peak_hour TIMESTAMP,
   browsed_count INT DEFAULT 0,
+  browse_peak_hour TIMESTAMP,
   revenue DECIMAL(10,2) NOT NULL DEFAULT 0
 );`);
     await analyticPool.query(`CREATE TABLE IF NOT EXISTS processed_purchase_confirmations (
@@ -20,27 +21,34 @@ const init = async () => {
   event TEXT NOT NULL,
   confirmed_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`);
+    await analyticPool.query(`CREATE TABLE IF NOT EXISTS processed_browse_events (
+  id SERIAL PRIMARY KEY,
+  event TEXT NOT NULL,
+  browsed_at TIMESTAMP NOT NULL
+);`);
     await analyticPool.query(`
-      WITH event_totals AS (
-        SELECT
-          event,
-          MIN(id) AS keep_id,
-          SUM(tickets_sold) AS tickets_sold,
-          MAX(peak_hour) AS peak_hour,
-          SUM(COALESCE(browsed_count, 0)) AS browsed_count,
-          SUM(revenue) AS revenue
-        FROM analytics
-        GROUP BY event
-      )
-      UPDATE analytics
-      SET
-        tickets_sold = event_totals.tickets_sold,
-        peak_hour = event_totals.peak_hour,
-        browsed_count = event_totals.browsed_count,
-        revenue = event_totals.revenue
-      FROM event_totals
-      WHERE analytics.id = event_totals.keep_id;
-    `);
+  WITH event_totals AS (
+    SELECT
+      event,
+      MIN(id) AS keep_id,
+      SUM(tickets_sold) AS tickets_sold,
+      MAX(ticket_purchase_peak_hour) AS ticket_purchase_peak_hour,
+      MAX(browse_peak_hour) AS browse_peak_hour,
+      SUM(COALESCE(browsed_count, 0)) AS browsed_count,
+      SUM(revenue) AS revenue
+    FROM analytics
+    GROUP BY event
+  )
+  UPDATE analytics
+  SET
+    tickets_sold = event_totals.tickets_sold,
+    ticket_purchase_peak_hour = event_totals.ticket_purchase_peak_hour,
+    browse_peak_hour = event_totals.browse_peak_hour,
+    browsed_count = event_totals.browsed_count,
+    revenue = event_totals.revenue
+  FROM event_totals
+  WHERE analytics.id = event_totals.keep_id;
+`);
     await analyticPool.query(`
       DELETE FROM analytics duplicate
       USING analytics kept

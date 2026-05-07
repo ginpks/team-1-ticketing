@@ -51,10 +51,7 @@ services:
     build:
       context: ./services/payment-service
       dockerfile: Dockerfile
-    container_name: payment-service
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     networks:
       - team-net
     environment:
@@ -115,8 +112,12 @@ services:
     depends_on:
       ticket-purchase:
         condition: service_healthy
+      event-catalogue:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -171,15 +172,14 @@ services:
     environment:
       - PURCHASE_DATABASE_URL=postgres://user:pass@purchasedb:5432/purchasedb
       - REDIS_URL=redis://redis:6379
+    ports:
+      - "4003:4003"
 
   event-catalogue:
     build:
       context: ./services/event-catalogue
       dockerfile: Dockerfile
-    container_name: event-catalogue
     restart: unless-stopped
-    ports:
-      - "3003:3003"
     networks:
       - team-net
     environment:
@@ -212,7 +212,7 @@ services:
 
   notification-worker:
     build:
-      context: ./services/notification-worker
+      context: ./workers/notification-worker
       dockerfile: Dockerfile
     container_name: notification-worker
     restart: unless-stopped

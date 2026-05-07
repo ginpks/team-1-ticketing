@@ -1,5 +1,49 @@
 :80 {
-    reverse_proxy ticket-purchase:3001 {
-        lb_policy round_robin
+    handle /health {
+        respond "OK" 200
+    }
+
+    handle /events* {
+        reverse_proxy {
+            dynamic a event-catalogue 3003 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle /pay {
+        reverse_proxy {
+            dynamic a payment-service 3000 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle /payment* {
+        reverse_proxy {
+            dynamic a payment-service 3000 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
+    }
+
+    handle {
+        reverse_proxy {
+            dynamic a ticket-purchase 3001 {
+                refresh 5s
+                resolvers 127.0.0.11
+                versions ipv4
+            }
+            lb_policy round_robin
+        }
     }
 }
