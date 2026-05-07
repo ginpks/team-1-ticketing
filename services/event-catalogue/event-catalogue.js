@@ -1,4 +1,5 @@
 import express from "express";
+import os from "os";
 import redis from "redis";
 import pkg from "pg";
 
@@ -7,10 +8,38 @@ const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const port = Number(process.env.PORT) || 3003;
 const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
+const replicaId = os.hostname();
 const client = redis.createClient({ url: redisUrl });
 const subscriber = redis.createClient({ url: redisUrl });
 
+async function resolveIds(eventName, seatName) {
+  const eventResult = await pool.query(
+    "SELECT event_id FROM events WHERE name = $1 LIMIT 1",
+    [eventName],
+  );
+  if (eventResult.rows.length === 0) return null;
+  const event_id = eventResult.rows[0].event_id;
+
+  if (!seatName) return { event_id };
+
+  const seatResult = await pool.query(
+    "SELECT seat_id FROM seats WHERE event_id = $1 AND seat_number = $2 LIMIT 1",
+    [event_id, seatName],
+  );
+  if (seatResult.rows.length === 0) return { event_id };
+  const seat_id = seatResult.rows[0].seat_id;
+
+  return { event_id, seat_id };
+}
+
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader("X-Replica-Id", replicaId);
+  console.log(
+    `[event-catalogue] replica ${replicaId} handled ${req.method} ${req.originalUrl}`,
+  );
+  next();
+});
 
 client.on("error", (err) => {
   console.error("Client Redis error:", err.message);
@@ -82,12 +111,34 @@ app.get("/events", async (_req, res) => {
   try {
     const cached = await client.get("events:all");
     if (cached) {
+      const events = JSON.parse(cached);
+      for (const event of events) {
+        await client.lPush(
+          "event-catalog:browsed",
+          JSON.stringify({
+            event: event.name,
+            browsed_count: 1,
+            peak_hour_browsed: new Date().toISOString(),
+          }),
+        );
+      }
       return res.status(200).json(JSON.parse(cached));
     }
 
     const result = await pool.query("SELECT * FROM events");
 
     await client.setEx("events:all", 60, JSON.stringify(result.rows));
+
+    for (const event of result.rows) {
+      await client.lPush(
+        "event-catalog:browsed",
+        JSON.stringify({
+          event: event.name,
+          browsed_count: 1,
+          peak_hour_browsed: new Date().toISOString(),
+        }),
+      );
+    }
 
     // Did not put a check for empty array, that is not an error.
     return res.status(200).json(result.rows);
@@ -97,17 +148,31 @@ app.get("/events", async (_req, res) => {
   }
 });
 
-// ------------- GET events/:event_id -------------
-app.get("/events/:event_id", async (req, res) => {
-  const { event_id } = req.params;
+// ------------- GET events/:event_name -------------
+app.get("/events/:event_name", async (req, res) => {
+  const { event_name } = req.params;
 
-  if (!event_id) {
-    return res.status(400).json({ error: "event_id is required" });
+  if (!event_name) {
+    return res.status(400).json({ error: "event_name is required" });
   }
 
   try {
+    const ids = await resolveIds(event_name, null);
+    if (!ids?.event_id) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    const { event_id } = ids;
+
     const cached = await client.get(`events:${event_id}`);
     if (cached) {
+      await client.lPush(
+        "event-catalog:browsed",
+        JSON.stringify({
+          event: event_name,
+          browsed_count: 1,
+          peak_hour_browsed: new Date().toISOString(),
+        }),
+      );
       return res.status(200).json(JSON.parse(cached));
     }
     const event = await pool.query("SELECT * FROM events WHERE event_id = $1", [
@@ -125,6 +190,16 @@ app.get("/events/:event_id", async (req, res) => {
       60,
       JSON.stringify(responseObject),
     );
+
+    await client.lPush(
+      "event-catalog:browsed",
+      JSON.stringify({
+        event: event_name,
+        browsed_count: 1,
+        peak_hour_browsed: new Date().toISOString(),
+      }),
+    );
+
     res.status(200).json(responseObject);
   } catch (err) {
     console.error("Error fetching event:", err.message);
@@ -132,19 +207,28 @@ app.get("/events/:event_id", async (req, res) => {
   }
 });
 
-// ------------- GET /events/:event_id/seats/:seat_id -------------
-app.get("/events/:event_id/seats/:seat_id", async (req, res) => {
-  const { event_id, seat_id } = req.params;
+// ------------- GET /events/:event_name/seats/:seat_name -------------
+app.get("/events/:event_name/seats/:seat_name", async (req, res) => {
+  const { event_name, seat_name } = req.params;
 
-  if (!event_id) {
-    return res.status(400).json({ error: "event_id is required" });
+  if (!event_name) {
+    return res.status(400).json({ error: "event_name is required" });
   }
 
-  if (!seat_id) {
-    return res.status(400).json({ error: "seat_id is required" });
+  if (!seat_name) {
+    return res.status(400).json({ error: "seat_name is required" });
   }
 
   try {
+    const ids = await resolveIds(event_name, seat_name);
+    if (!ids?.event_id) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    if (!ids?.seat_id) {
+      return res.status(404).json({ error: "Seat not found for this event" });
+    }
+    const { event_id, seat_id } = ids;
+
     const result = await pool.query(
       "SELECT * FROM seats WHERE seat_id = $1 AND event_id = $2",
       [seat_id, event_id],
@@ -217,14 +301,28 @@ app.listen(port, async () => {
     await subscriber.subscribe("purchases:confirmed", async (message) => {
       try {
         const { seat, event } = JSON.parse(message);
-        if (!seat || !event) return;
+        if (!seat || !event) {
+          console.error("purchases:confirmed missing seat or event", message);
+          return;
+        }
+
+        const ids = await resolveIds(event, seat);
+        if (!ids?.event_id) {
+          console.error(`purchases:confirmed event not found: ${event}`);
+          return;
+        }
+        if (!ids?.seat_id) {
+          console.error(
+            `purchases:confirmed seat not found: ${seat} in event ${event}`,
+          );
+          return;
+        }
 
         await pool.query(
           "UPDATE seats SET status = 'sold' WHERE seat_id = $1 AND event_id = $2",
-          [seat, event],
+          [ids.seat_id, ids.event_id],
         );
-
-        await client.del(`events:${event}`);
+        await client.del(`events:${ids.event_id}`);
         console.log(
           `Seat ${seat} marked as sold, cache invalidated for event ${event}`,
         );
@@ -237,14 +335,28 @@ app.listen(port, async () => {
     await subscriber.subscribe("seat:released", async (message) => {
       try {
         const { seat, event } = JSON.parse(message);
-        if (!seat || !event) return;
+        if (!seat || !event) {
+          console.error("seat:released missing seat or event", message);
+          return;
+        }
+
+        const ids = await resolveIds(event, seat);
+        if (!ids?.event_id) {
+          console.error(`seat:released event not found: ${event}`);
+          return;
+        }
+        if (!ids?.seat_id) {
+          console.error(
+            `seat:released seat not found: ${seat} in event ${event}`,
+          );
+          return;
+        }
 
         await pool.query(
           "UPDATE seats SET status = 'available' WHERE seat_id = $1 AND event_id = $2",
-          [seat, event],
+          [ids.seat_id, ids.event_id],
         );
-
-        await client.del(`events:${event}`);
+        await client.del(`events:${ids.event_id}`);
         console.log(
           `Seat ${seat} marked as available, cache invalidated for event ${event}`,
         );
