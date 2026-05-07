@@ -19,7 +19,7 @@
 | Team Member | What They Delivered | Key Commits |
 | ----------- | ------------------- | ----------- |
 | Tun Lin Naine  | waitlist dlq endpoint | https://github.com/ginpks/team-1-ticketing/pull/51/changes, https://github.com/ginpks/team-1-ticketing/pull/53|
-| Aryan          | Refactor code base | [PR #46](https://github.com/ginpks/team-1-ticketing/pull/46), [PR #47](https://github.com/ginpks/team-1-ticketing/pull/47), [PR #55](https://github.com/ginpks/team-1-ticketing/pull/55) |
+| Aryan          | Refactor code base | [PR #46](https://github.com/ginpks/team-1-ticketing/pull/46), [PR #47](https://github.com/ginpks/team-1-ticketing/pull/47), [PR #55](https://github.com/ginpks/team-1-ticketing/pull/55), [PR #56](https://github.com/ginpks/team-1-ticketing/pull/56), [PR #57](https://github.com/ginpks/team-1-ticketing/pull/57) |
 | Vihaan Sejwani | Implemented Event Catalog pushing analytics for the analytics worker. Fixed analytics worker to consume correctly from Event Catalog and from the purchase:confirmed pub sub. Implemented correct peak hour calculation.                                                                                                         | [PR #54](https://github.com/ginpks/team-1-ticketing/pull/54)                                                                                                                                                                                                                |
 | Mark Gallant   | Reviewed PRs and helped finalize project. Contributed to demo day script / cheat sheet in the k6 and poison pill sections. |   n/a                                                                                                                                                                                                                               | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Fraud DB, Fraud Detection Worker                                                                                                                                                                                                                                  | [PR #40](https://github.com/ginpks/team-1-ticketing/pull/40)                                                                                                                                                                                                                |
@@ -60,7 +60,6 @@ team-1-ticketing-ticket-purchase-3        ticket-purchase   Up (healthy)    3000
 
 ## What Is Not Working / Cut
 
-- Caddy healthcheck shows `(unhealthy)` in `docker compose ps` due to a misconfigured healthcheck test, but Caddy is actually routing traffic correctly — verified by hitting `http://caddy:80/events` from Holmes and receiving correct responses.
 ---
 
 ## k6 Results

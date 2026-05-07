@@ -20,7 +20,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 | -------------- | ----------------------------------------------------------- |
 | Arkar Myint | `k6/sprint-4-scale.js`, `k6/sprint-4-replica.js` |
 | Vihaan Sejwani | `services/event-catalog/`, `workers/analytics-worker/`      |
-| Aryan Vakil    | `db/refund/`                                                |
+| Aryan Vakil    | `services/`, `Caddyfile`                                                |
 | Tun Lin Naine  | `workers/waitlist-worker`                                   |
 | Din Masic      | `services/ticket-purchase/`                                 |
 | Gin Park       | `workers/analytics-worker/`, `compose.yml`                  |
@@ -47,7 +47,8 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Aryan Vakil
 
-- [x] Create db for refund service
+- [x] Remove extra files and directories in the code base
+- [x] Clean up and refactor the code base
 
 ### Tun Lin Naine
 
