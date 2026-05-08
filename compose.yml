@@ -482,6 +482,24 @@ services:
   #     interval: 5s
   #     timeout: 3s
   #     retries: 5
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - team-net
+    environment:
+      - PORT=8000
+      - CADDY_URL=http://caddy:80
+      - REFUND_URL=http://refund-service:3007
+      - NOTIFICATION_SVC_URL=http://notification-service:3005
+      - NOTIFICATION_WORKER_URL=http://notification-worker:3006
+      - TICKET_WORKER_URL=http://ticket-worker:4000
+      - ANALYTICS_WORKER_URL=http://analytics-worker:4001
+      - FRAUD_WORKER_URL=http://fraud-worker:4002
+      - WAITLIST_WORKER_URL=http://waitlist-worker:4003
   notification-service:
     build:
       context: ./services/notification-service

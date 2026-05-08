@@ -25,7 +25,7 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 | Din Masic      | `services/ticket-purchase/`                                 |
 | Gin Park       | `workers/analytics-worker/`, `compose.yml`                  |
 | Mark Gallant   | `k6/`                                                       |
-| Sidharth Jain  | `services/notification-worker/`, `Caddyfile`, `compose.yml` |
+| Sidharth Jain  | `services/notification-worker/`, `Caddyfile`, `compose.yml`,`/frontend` |
 
 ---
 
@@ -67,12 +67,12 @@ The ticket-purchase, payment, and event catalog services will be replicated.
 
 ### Sidharth Jain
 
-- [x] Add DLQ handling to notification worker — malformed messages and failed notification calls pushed to `purchases:confirmed:dlq`
-- [x] Update `/health` endpoint to include `queue_depth`, `dlq_depth` (read live from Redis), and `last_job_at`
-- [x] Worker remains `healthy` while DLQ fills — poison pills do not crash or block good messages
 - [x] Add Caddy as reverse proxy and load balancer in front of `ticket-purchase` service
 - [x] Remove static port and `container_name` from `ticket-purchase` to support `--scale`
 - [x] Verified round-robin distribution across 3 replicas via Holmes
+- [x] Build internal dashboard frontend — six-panel SPA (System Health, Events, Purchase, Refund, Analytics, Fraud) served on port 8000
+- [x] Express proxy server forwards API calls to internal Docker hostnames (no CORS required)
+- [x] Real-time pipeline tracing for async purchases, 5-second auto-polling for analytics and fraud metrics
 
 ### Mark Gallant
 

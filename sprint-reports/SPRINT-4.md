@@ -8,10 +8,10 @@
 
 ## What We Built
 
-[Which services are replicated? How does load balancing work? What polish work was completed?]
-- The event catalogue, ticket-purhcase, and payment services were replicated.
+- The event-catalogue, ticket-purchase, and payment services were replicated using `--scale`, running 3 instances each behind Caddy's round-robin load balancer.
 - Added Sprint 4 k6 tests for scaling comparison and replica failure resilience, validating that the system handles replica failure with zero dropped requests.
 - Ran and validated both k6 tests with 3 replicas running behind Caddy.
+- Built a full-stack internal dashboard frontend (port 8000) — a six-panel SPA covering System Health, Events, Purchase pipeline, Refund, Analytics, and Fraud Detection. The frontend runs as its own Docker service with an Express proxy server that forwards API calls to internal Docker hostnames, avoiding CORS entirely.
 ---
 
 ## Individual Contributions
@@ -24,7 +24,7 @@
 | Mark Gallant   | Reviewed PRs and helped finalize project. Contributed to demo day script / cheat sheet in the k6 and poison pill sections. |   n/a                                                                                                                                                                                                                               | [PR #17](https://github.com/ginpks/team-1-ticketing/pull/17)                                                                                                                                                                                                                |
 | Din            | Helped fix issues regarding workers. Cheat sheet contribution.                                                                                                                                                                                                                                   | n/a                                                                                                                                                                                                                |
 | Gin Park       | Service replication | https://github.com/ginpks/team-1-ticketing/pull/47 |
-| Sidharth Jain | Added DLQ handling to notification worker — malformed JSON and failed notification calls are pushed to `purchases:confirmed:dlq` with reason and timestamp. Updated `/health` to show live `dlq_depth` from Redis. Added Caddy load balancer in front of `ticket-purchase` with round-robin across 3 replicas. Removed static port and container_name to support `--scale`. | [PR #23](https://github.com/ginpks/team-1-ticketing/pull/23), [PR — task/caddy-load-balancer] |
+| Sidharth Jain | Wrote `Caddyfile` — reverse proxy with round-robin DNS load balancing across `ticket-purchase` replicas using Caddy's `dynamic a` resolver. Updated `compose.yml` to remove the static port and `container_name` from `ticket-purchase` so it supports `--scale`, and added the `frontend` service. Built the internal dashboard (`frontend/`) — a six-panel SPA (System Health, Events, Purchase, Refund, Analytics, Fraud) served on port 8000. Express proxy server forwards all API calls to internal Docker hostnames so the browser never hits backends directly. Includes real-time pipeline tracing for async purchases and 5-second auto-polling for analytics and fraud metrics. | dev branch |
 | Arkar Myint | Built `k6/sprint-4-scale.js` and `k6/sprint-4-replica.js`, scaling comparison test and replica failure test hitting GET /events through Caddy. Ran and validated both tests with 3 replicas. | [PR #52](https://github.com/ginpks/team-1-ticketing/pull/52) |
 
 ---
@@ -162,4 +162,6 @@ Zero failed requests throughout the entire test including during the replica fai
 
 ## Blockers and Lessons Learned
 
-Arkar M: Doing the replica failure test showed me what replication actually means in practice. It is not just about running more copies, it is about making sure the load balancer detects failures and reroutes traffic automatically. Seeing zero errors while a replica was stopped was the proof. 
+Arkar M: Doing the replica failure test showed me what replication actually means in practice. It is not just about running more copies, it is about making sure the load balancer detects failures and reroutes traffic automatically. Seeing zero errors while a replica was stopped was the proof.
+
+Sidharth J: Building the frontend exposed a subtle issue with Caddy path forwarding — because `handle /events*` passes the full path to the upstream service, a health check routed through `caddy:80/events/health` would arrive at event-catalogue as `/events/health` instead of `/health`, causing a 404. The fix was to call each service's `/health` endpoint directly by Docker hostname rather than routing through Caddy. The same proxy-as-API-gateway pattern also meant the browser never needed CORS headers since all requests stay on `localhost:8000`.

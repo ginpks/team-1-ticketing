@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketing OS — Sprint 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">◈</div>
+    <div>
+      <div class="brand-name">Ticketing OS</div>
+      <div class="brand-sub">Sprint 4 · CS 426</div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" data-panel="system">
+      <span class="nav-dot"></span> System
+    </button>
+    <button class="nav-item" data-panel="events">
+      <span class="nav-dot"></span> Events
+    </button>
+    <button class="nav-item" data-panel="purchase">
+      <span class="nav-dot"></span> Purchase
+    </button>
+    <button class="nav-item" data-panel="refund">
+      <span class="nav-dot"></span> Refund
+    </button>
+    <button class="nav-item" data-panel="analytics">
+      <span class="nav-dot"></span> Analytics
+    </button>
+    <button class="nav-item" data-panel="fraud">
+      <span class="nav-dot"></span> Fraud
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="global-status">
+      <span class="gdot" id="global-dot"></span>
+      <span id="global-text">Connecting…</span>
+    </div>
+    <div class="last-refresh" id="last-refresh">—</div>
+  </div>
+</aside>
+
+<main class="content">
+
+  <!-- ── System Health ──────────────────────────────────────────────── -->
+  <section class="panel active" id="panel-system">
+    <div class="panel-header">
+      <div>
+        <h1 class="panel-title">System Health</h1>
+        <p class="panel-sub" id="health-summary">Loading…</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadHealth()">Refresh</button>
+    </div>
+
+    <div class="section-label">Services</div>
+    <div class="health-grid" id="services-grid"></div>
+
+    <div class="section-label" style="margin-top:28px">Workers</div>
+    <div class="workers-list" id="workers-list"></div>
+  </section>
+
+  <!-- ── Events ─────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-events">
+    <div class="panel-header">
+      <div>
+        <h1 class="panel-title">Events</h1>
+        <p class="panel-sub">Browse available events and seat inventory</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadEvents()">Refresh</button>
+    </div>
+    <div id="events-container"><div class="empty-state">Loading events…</div></div>
+  </section>
+
+  <!-- ── Purchase ───────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-purchase">
+    <div class="panel-header">
+      <h1 class="panel-title">Purchase Ticket</h1>
+    </div>
+    <div class="split-layout">
+
+      <div class="card form-card">
+        <div class="form-group">
+          <label class="form-label">Event</label>
+          <select class="form-control" id="purchase-event"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Seat</label>
+          <input class="form-control" id="purchase-seat" placeholder="e.g. E1234" type="text">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount ($)</label>
+          <input class="form-control" id="purchase-amount" placeholder="50.00" type="number" step="0.01" min="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Idempotency Key</label>
+          <div class="field-row">
+            <input class="form-control mono" id="purchase-idem" readonly>
+            <button class="btn btn-ghost btn-icon" onclick="regenerateKey()" title="Regenerate">↺</button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="purchase-btn" onclick="submitPurchase()">Purchase Ticket</button>
+        <button class="btn btn-outline btn-block" id="waitlist-btn" onclick="submitWaitlist()" style="display:none;margin-top:8px">Join Waitlist Instead</button>
+      </div>
+
+      <div class="card pipeline-card">
+        <div class="card-label">Async Pipeline</div>
+        <div id="pipeline-body">
+          <div class="empty-state" style="margin-top:32px">Submit a purchase to trace the pipeline</div>
+        </div>
+        <div id="purchase-result" class="purchase-result"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Refund ─────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-refund">
+    <div class="panel-header">
+      <h1 class="panel-title">Refund</h1>
+    </div>
+    <div class="split-layout">
+
+      <div class="card form-card">
+        <div class="form-group">
+          <label class="form-label">Purchase ID</label>
+          <input class="form-control mono" id="refund-purchase-id" placeholder="e.g. 42">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount ($)</label>
+          <input class="form-control" id="refund-amount" placeholder="50.00" type="number" step="0.01" min="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Idempotency Key</label>
+          <div class="field-row">
+            <input class="form-control mono" id="refund-idem" readonly>
+            <button class="btn btn-ghost btn-icon" onclick="regenerateRefundKey()" title="Regenerate">↺</button>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-block" onclick="submitRefund()">Process Refund</button>
+      </div>
+
+      <div class="card" id="refund-result-card" style="display:flex;align-items:center;justify-content:center">
+        <div class="empty-state">Enter a purchase ID and amount to process a refund</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Analytics ─────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-analytics">
+    <div class="panel-header">
+      <div>
+        <h1 class="panel-title">Analytics</h1>
+        <p class="panel-sub">Purchase and browse event metrics</p>
+      </div>
+      <span class="refresh-badge">↻ 5s</span>
+    </div>
+    <div class="stats-row" id="analytics-stats"></div>
+    <div id="analytics-detail"></div>
+  </section>
+
+  <!-- ── Fraud ──────────────────────────────────────────────────────── -->
+  <section class="panel" id="panel-fraud">
+    <div class="panel-header">
+      <div>
+        <h1 class="panel-title">Fraud Detection</h1>
+        <p class="panel-sub">Suspicious pattern monitoring</p>
+      </div>
+      <span class="refresh-badge">↻ 5s</span>
+    </div>
+    <div class="stats-row" id="fraud-stats"></div>
+    <div id="fraud-detail"></div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
